@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 3 — Final Response | CUTLINE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    /* ── Split layout ── */
+    .race-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 700px) { .race-container { grid-template-columns: 1fr; } }
+
+    .race-lane {
+      border: 1px solid;
+      padding: 1.25rem;
+      opacity: 0.4;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      position: relative;
+    }
+    .race-lane.blue { border-color: rgba(74,158,255,0.3); background: rgba(74,158,255,0.02); }
+    .race-lane.red  { border-color: rgba(255,74,74,0.3);  background: rgba(255,74,74,0.02); }
+    .race-lane.active { opacity: 1; pointer-events: all; }
+    .race-lane.won  { border-color: var(--green); background: rgba(61,220,132,0.05); }
+    .race-lane.lost { opacity: 0.35; }
+
+    .lane-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .lane-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .lane-title.blue { color: var(--blue); }
+    .lane-title.red  { color: var(--red); }
+    .lane-progress { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; }
+
+    .sub-step { display: none; }
+    .sub-step.active { display: block; animation: slideIn 0.35s ease; }
+
+    /* ── Timer ── */
+    .race-timer {
+      text-align: center; padding: 0.75rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.8rem; letter-spacing: 0.1em;
+      color: var(--yellow); margin-bottom: 1.5rem;
+    }
+    .race-timer .timer-label { font-size: 0.6rem; color: var(--muted); display: block; margin-bottom: 0.25rem; }
+
+    /* ── Network diagram (Blue team) ── */
+    .network-editor {
+      background: #060810; border: 1px solid rgba(74,158,255,0.1);
+      padding: 1rem; margin-bottom: 1rem;
+    }
+    .ip-field {
+      display: inline-block; background: rgba(74,158,255,0.1);
+      border: 1px dashed rgba(74,158,255,0.4); color: var(--accent);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.75rem;
+      padding: 0.15rem 0.4rem; min-width: 100px; outline: none;
+      letter-spacing: 0.05em;
+    }
+    .ip-field:focus { background: rgba(74,158,255,0.15); border-color: var(--accent); }
+    .ip-field.correct { background: rgba(61,220,132,0.1); border-color: var(--green); color: var(--green); }
+    .ip-field.wrong   { background: rgba(255,74,74,0.1);  border-color: var(--red);   color: var(--red); animation: shake 0.3s; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+    .node-box {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.4rem 0.75rem; border: 1px solid;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.08em; text-transform: uppercase; min-width: 90px;
+    }
+    .node-box.router { border-color: var(--accent); color: var(--accent); background: rgba(74,158,255,0.06); }
+    .node-box.server { border-color: var(--green);  color: var(--green);  background: rgba(61,220,132,0.06); }
+    .node-box.broken { border-color: var(--red);    color: var(--red);    background: rgba(255,74,74,0.06); }
+    .connector { font-family: 'Share Tech Mono', monospace; color: var(--muted); font-size: 0.75rem; padding: 0 0.3rem; }
+
+    /* ── Simon game ── */
+    .simon-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.5rem; margin: 1rem 0;
+    }
+    .simon-btn {
+      height: 70px; border: 2px solid; cursor: pointer;
+      transition: all 0.15s; border-radius: 4px;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none;
+    }
+    .simon-btn[data-color="blue"]   { border-color: #4a9eff; color: #4a9eff; background: rgba(74,158,255,0.08); }
+    .simon-btn[data-color="green"]  { border-color: #3ddc84; color: #3ddc84; background: rgba(61,220,132,0.08); }
+    .simon-btn[data-color="yellow"] { border-color: #f5c542; color: #f5c542; background: rgba(245,197,66,0.08); }
+    .simon-btn[data-color="red"]    { border-color: #ff4a4a; color: #ff4a4a; background: rgba(255,74,74,0.08); }
+    .simon-btn.lit[data-color="blue"]   { background: rgba(74,158,255,0.6); color: #fff; }
+    .simon-btn.lit[data-color="green"]  { background: rgba(61,220,132,0.6); color: #fff; }
+    .simon-btn.lit[data-color="yellow"] { background: rgba(245,197,66,0.6); color: #000; }
+    .simon-btn.lit[data-color="red"]    { background: rgba(255,74,74,0.6); color: #fff; }
+    .simon-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    /* ── Maze (Red team) ── */
+    .maze-container { background: #060810; border: 1px solid rgba(255,74,74,0.1); padding: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: center; }
+    canvas#mazeCanvas { display: block; image-rendering: pixelated; }
+
+    /* ── Code fix (Red team) ── */
+    .code-editor {
+      background: #030609; border: 1px solid rgba(255,74,74,0.15);
+      padding: 0.75rem; font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem; line-height: 1.8; overflow-x: auto;
+    }
+    .code-line { display: flex; gap: 0.75rem; }
+    .code-ln   { color: var(--muted); min-width: 1.5rem; text-align: right; user-select: none; }
+    .code-txt  { color: var(--text); }
+    .code-txt .kw { color: #ff79c6; }
+    .code-txt .str { color: #f1fa8c; }
+    .code-txt .fn { color: #50fa7b; }
+    .code-txt .cm { color: #6272a4; }
+    .code-txt .err { color: var(--red); background: rgba(255,74,74,0.15); text-decoration: underline; text-decoration-color: var(--red); cursor: pointer; }
+    .code-txt .fix { color: var(--green); background: rgba(61,220,132,0.1); }
+
+    /* ── Outcome screen ── */
+    .outcome-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(5,8,12,0.97); z-index: 200;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem;
+    }
+    .outcome-overlay.show { display: flex; animation: fadeIn 0.8s ease; }
+    .outcome-title {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+      font-size: clamp(2.5rem,6vw,5rem); letter-spacing: 0.05em; text-transform: uppercase;
+      line-height: 1; margin-bottom: 1rem;
+    }
+    .outcome-sub {
+      font-size: 0.9rem; color: var(--muted); max-width: 500px; line-height: 1.7;
+    }
+    .outcome-stats {
+      display: flex; gap: 2rem; margin: 1.5rem 0;
+    }
+    .outcome-stat { text-align: center; }
+    .outcome-stat .val { font-family: 'Share Tech Mono', monospace; font-size: 1.4rem; }
+    .outcome-stat .lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+
+    .confetti-dot {
+      position: fixed; border-radius: 50%;
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-layout">
+  <div class="top-bar" id="topBar"></div>
+
+  <div class="phase-content" style="max-width:1100px">
+
+    <div class="phase-header">
+      <div class="phase-number">PHASE 03 — PARALLEL RACE</div>
+      <div class="phase-title">Final Response</div>
+      <div class="phase-desc">Both teams act simultaneously. <strong class="blue">Blue Team</strong> must restore the network before the threat spreads. <strong class="red">Red Team</strong> must complete their cleanup operation before Blue Team finishes. First to complete shapes the outcome.</div>
+    </div>
+
+    <div class="race-timer">
+      <span class="timer-label">ELAPSED TIME</span>
+      <span id="timerDisplay">00:00</span>
+    </div>
+
+    <div class="race-container">
+
+      <!-- ═══════════ BLUE TEAM LANE ═══════════ -->
+      <div class="race-lane blue" id="blueLane">
+        <div class="lane-header">
+          <span class="lane-title blue">◈ BLUE TEAM — Network Restoration</span>
+          <span class="lane-progress" id="blueProgress">STEP 1/2</span>
+        </div>
+
+        <!-- Blue Step 1: IP routing ── -->
+        <div class="sub-step active" id="blue-s1">
+          <div class="enigma-q" style="margin-bottom:1rem">
+            <strong>Task 1:</strong> The routing table was corrupted during the fault. Restore the correct IP addresses for the damaged segment. Fill in the missing values to rebuild the routes.
+          </div>
+
+          <div class="network-editor">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem;letter-spacing:0.1em">// ROUTING TABLE RECONSTRUCTION — SEG-ATL-48</div>
+
+            <div style="display:flex;flex-direction:column;gap:0.6rem">
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                <div class="node-box router">CORE-R1</div>
+                <span class="connector">──</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">eth2:</span>
+                <input class="ip-field" id="ip1" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
+                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">/30</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;padding-left:1.5rem">
+                <span class="connector" style="font-size:1rem">↕</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">GW:</span>
+                <input class="ip-field" id="ip2" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
+              </div>
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                <div class="node-box broken">EDGE-SW-48</div>
+                <span class="connector">──</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">subnet:</span>
+                <input class="ip-field" id="ip3" placeholder="___.__.___.___" maxlength="18" spellcheck="false" autocomplete="off">
+              </div>
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                <div class="node-box server">TERM-SEA-48</div>
+                <span class="connector">──</span>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">host:</span>
+                <input class="ip-field" id="ip4" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
+              </div>
+            </div>
+
+            <div style="margin-top:0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">
+              // Reference: Subnet space 192.168.48.0/21 | Router is .1 | Switch is .2 | Host is .5 | GW is router eth2 address
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="checkBlueIPs()" style="width:100%">VERIFY ROUTING TABLE</button>
+          <div class="feedback" id="blue-s1-fb"></div>
+        </div>
+
+        <!-- Blue Step 2: Simon game ── -->
+        <div class="sub-step" id="blue-s2">
+          <div class="enigma-q" style="margin-bottom:0.75rem">
+            <strong>Task 2:</strong> Execute the network restoration sequence. Memorise and reproduce the initialisation protocol pattern to bring the segment online.
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:0.75rem" id="simonStatus">Watch the sequence, then repeat it.</div>
+          <div class="simon-grid">
+            <button class="simon-btn" data-color="blue"   onclick="simonPress('blue')"   disabled>NET INIT</button>
+            <button class="simon-btn" data-color="green"  onclick="simonPress('green')"  disabled>ROUTE UP</button>
+            <button class="simon-btn" data-color="yellow" onclick="simonPress('yellow')" disabled>SYNC BGP</button>
+            <button class="simon-btn" data-color="red"    onclick="simonPress('red')"    disabled>VERIFY</button>
+          </div>
+          <button class="btn btn-primary" id="simonStartBtn" onclick="startSimon()" style="width:100%">▸ START SEQUENCE</button>
+          <div class="feedback" id="blue-s2-fb"></div>
+        </div>
+      </div><!-- /blue lane -->
+
+      <!-- ═══════════ RED TEAM LANE ═══════════ -->
+      <div class="race-lane red" id="redLane">
+        <div class="lane-header">
+          <span class="lane-title red">◈ RED TEAM — Threat Neutralisation</span>
+          <span class="lane-progress" id="redProgress">STEP 1/2</span>
+        </div>
+
+        <!-- Red Step 1: Maze ── -->
+        <div class="sub-step active" id="red-s1">
+          <div class="enigma-q" style="margin-bottom:0.75rem">
+            <strong>Task 1:</strong> Navigate the network topology maze to reach the compromised server node and deploy the cleanup script. Use arrow keys or WASD.
+          </div>
+          <div class="maze-container">
+            <canvas id="mazeCanvas" width="300" height="300"></canvas>
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);text-align:center" id="mazeStatus">Navigate to the 🔴 target node</div>
+          <div style="margin-top:0.5rem;display:grid;grid-template-columns:repeat(3,40px);gap:4px;justify-content:center">
+            <div></div>
+            <button class="btn btn-danger" onclick="mazeMove('up')"    style="padding:0.3rem;font-size:0.9rem">▲</button>
+            <div></div>
+            <button class="btn btn-danger" onclick="mazeMove('left')"  style="padding:0.3rem;font-size:0.9rem">◀</button>
+            <button class="btn btn-danger" onclick="mazeMove('down')"  style="padding:0.3rem;font-size:0.9rem">▼</button>
+            <button class="btn btn-danger" onclick="mazeMove('right')" style="padding:0.3rem;font-size:0.9rem">▶</button>
+          </div>
+        </div>
+
+        <!-- Red Step 2: Code fix ── -->
+        <div class="sub-step" id="red-s2">
+          <div class="enigma-q" style="margin-bottom:0.75rem">
+            <strong>Task 2:</strong> Three lines in the cleanup script contain bugs that will expose the operation. Click each <span style="color:var(--red)">highlighted error</span> and type the correct value.
+          </div>
+
+          <div class="code-editor" id="codeEditor">
+            <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="kw">#!/bin/bash</span></span></div>
+            <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="cm"># OPERATION CUTLINE — Trace cleanup</span></span></div>
+            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="fn">TARGET_IP</span>=<span class="str">"192.168.48.1"</span></span></div>
+            <div class="code-line"><span class="code-ln">05</span><span class="code-txt"><span class="fn">LOG_DIR</span>=<span class="str" id="ce1" class="err" onclick="editCode(this,'ce1','/var/log/audit')"  style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">&quot;/var/log/autid&quot;</span>  <span class="cm"># ERROR</span></span></div>
+            <div class="code-line"><span class="code-ln">06</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">07</span><span class="code-txt"><span class="cm"># Wipe AIS transponder log entries</span></span></div>
+            <div class="code-line"><span class="code-ln">08</span><span class="code-txt"><span class="fn">sed</span> -i <span class="str" id="ce2" onclick="editCode(this,'ce2','s/273410820/000000000/g')" style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">&quot;s/MMSI_TARGET/000000000/g&quot;</span> $LOG_DIR/ais.log  <span class="cm"># ERROR</span></span></div>
+            <div class="code-line"><span class="code-ln">09</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">10</span><span class="code-txt"><span class="cm"># Zero-fill satellite imagery cache</span></span></div>
+            <div class="code-line"><span class="code-ln">11</span><span class="code-txt"><span class="fn">shred</span> -n <span id="ce3" onclick="editCode(this,'ce3','7')" style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">0</span> -z /data/sat/C2_0419Z.sar  <span class="cm"># ERROR</span></span></div>
+            <div class="code-line"><span class="code-ln">12</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">13</span><span class="code-txt"><span class="kw">echo</span> <span class="str">"Cleanup complete — traces eliminated"</span></span></div>
+          </div>
+
+          <div style="margin-top:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">
+            Errors: (1) Wrong log path — should be audit not autid &nbsp;|&nbsp; (2) MMSI pattern — use the real MMSI &nbsp;|&nbsp; (3) shred passes: 0 is ineffective, use 7
+          </div>
+
+          <button class="btn btn-danger" onclick="checkCode()" style="width:100%;margin-top:0.75rem">RUN SCRIPT</button>
+          <div class="feedback" id="red-s2-fb"></div>
+        </div>
+      </div><!-- /red lane -->
+
+    </div><!-- /race-container -->
+  </div>
+</div>
+
+<!-- ═══ OUTCOME OVERLAY ═══ -->
+<div class="outcome-overlay" id="outcomeOverlay">
+  <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.3em;color:var(--muted);margin-bottom:1rem" id="outcomeBadge">EXERCISE COMPLETE</div>
+  <div class="outcome-title" id="outcomeTitle">—</div>
+  <div class="outcome-sub" id="outcomeSub">—</div>
+  <div class="outcome-stats">
+    <div class="outcome-stat">
+      <div class="val" id="outWinner">—</div>
+      <div class="lbl">Winner</div>
+    </div>
+    <div class="outcome-stat">
+      <div class="val" id="outTime">—</div>
+      <div class="lbl">Winning Time</div>
+    </div>
+  </div>
+  <button class="btn btn-success" onclick="window.location.href='../index.html'" style="margin-top:1rem;padding:0.75rem 2rem;font-size:0.9rem">▸ RESTART EXERCISE</button>
+</div>
+
+<script src="../js/global.js"></script>
+<script>
+// ── Init ──────────────────────────────────────────────────────
+const team = State.team;
+renderTopBar('03', 'FINAL RESPONSE');
+
+const blueLane = document.getElementById('blueLane');
+const redLane  = document.getElementById('redLane');
+
+// Activate only the player's lane
+if (team === 'blue') {
+  blueLane.classList.add('active');
+} else {
+  redLane.classList.add('active');
+}
+
+// ── Race Timer ────────────────────────────────────────────────
+let raceStart = Date.now();
+let timerInterval = setInterval(() => {
+  const elapsed = Math.floor((Date.now() - raceStart) / 1000);
+  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const s = String(elapsed%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+}, 1000);
+
+// ── Race sync via BroadcastChannel ────────────────────────────
+const raceChannel = new BroadcastChannel('crisis_race_p3');
+raceChannel.onmessage = (e) => {
+  if (e.data.type === 'finish') {
+    handleOpponentFinished(e.data.team, e.data.elapsed);
+  }
+};
+
+function signalMyFinish() {
+  const elapsed = Math.floor((Date.now() - raceStart) / 1000);
+  raceChannel.postMessage({ type: 'finish', team, elapsed });
+  handleFinish(team, elapsed, true);
+}
+
+function handleOpponentFinished(winnerTeam, elapsed) {
+  if (winnerTeam !== team) {
+    handleFinish(winnerTeam, elapsed, false);
+  }
+}
+
+function handleFinish(winner, elapsed, iMe) {
+  clearInterval(timerInterval);
+  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const s = String(elapsed%60).padStart(2,'0');
+  const timeStr = `${m}:${s}`;
+
+  const overlay = document.getElementById('outcomeOverlay');
+  const title   = document.getElementById('outcomeTitle');
+  const sub     = document.getElementById('outcomeSub');
+  const badge   = document.getElementById('outcomeBadge');
+  const winEl   = document.getElementById('outWinner');
+  const timeEl  = document.getElementById('outTime');
+
+  winEl.textContent = (winner === 'blue' ? 'BLUE TEAM' : 'RED TEAM');
+  timeEl.textContent = timeStr;
+  winEl.style.color = winner === 'blue' ? 'var(--blue)' : 'var(--red)';
+
+  if (winner === 'blue') {
+    title.textContent = 'Network Restored';
+    title.style.color = 'var(--blue)';
+    sub.textContent = 'Blue Team completed the restoration sequence before the threat was neutralised. The cable segment is back online — the operation is exposed. Blue Team wins.';
+  } else {
+    title.textContent = 'Traces Eliminated';
+    title.style.color = 'var(--red)';
+    sub.textContent = 'Red Team completed the cleanup before Blue Team restored the network. All forensic traces were wiped before the restoration window closed. Red Team wins.';
+  }
+
+  overlay.classList.add('show');
+  if (winner === team) launchConfetti(winner);
+}
+
+function launchConfetti(winner) {
+  const color = winner === 'blue' ? '#4a9eff' : '#ff4a4a';
+  for (let i = 0; i < 60; i++) {
+    const d = document.createElement('div');
+    d.className = 'confetti-dot';
+    const size = 4 + Math.random() * 6;
+    d.style.cssText = `width:${size}px;height:${size}px;background:${color};left:${Math.random()*100}vw;top:-10px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.8}s;opacity:0.85;`;
+    document.body.appendChild(d);
+  }
+}
+
+// ══════════════════════════════════════════
+// BLUE TEAM LOGIC
+// ══════════════════════════════════════════
+const correctIPs = {
+  ip1: '192.168.48.1',  // router eth2
+  ip2: '192.168.48.1',  // gateway
+  ip3: '192.168.48.0/21',
+  ip4: '192.168.48.5'
+};
+
+// Accept slight variations
+function ipMatch(input, correct) {
+  return input.trim().replace(/\s/g,'') === correct;
+}
+
+function checkBlueIPs() {
+  const fields = ['ip1','ip2','ip3','ip4'];
+  let allOk = true;
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    const val = el.value.trim();
+    if (ipMatch(val, correctIPs[id])) {
+      el.classList.remove('wrong'); el.classList.add('correct'); el.disabled = true;
+    } else {
+      el.classList.remove('correct'); el.classList.add('wrong');
+      allOk = false;
+    }
+  });
+  const fb = document.getElementById('blue-s1-fb');
+  if (allOk) {
+    fb.textContent = '✓ All routes verified — switching to activation sequence.';
+    fb.className = 'feedback show ok';
+    document.getElementById('blueProgress').textContent = 'STEP 2/2';
+    setTimeout(() => {
+      document.getElementById('blue-s1').classList.remove('active');
+      document.getElementById('blue-s2').classList.add('active');
+    }, 900);
+  } else {
+    fb.textContent = '✗ One or more IP addresses are incorrect — check the subnet reference below the table.';
+    fb.className = 'feedback show err';
+  }
+}
+
+// ── Simon game ────────────────────────────────────────────────
+const COLORS = ['blue','green','yellow','red'];
+const LABELS = { blue:'NET INIT', green:'ROUTE UP', yellow:'SYNC BGP', red:'VERIFY' };
+let simonSeq = [], simonInput = [], simonRound = 0, simonMaxRounds = 4;
+let simonActive = false;
+
+function startSimon() {
+  document.getElementById('simonStartBtn').style.display = 'none';
+  simonSeq = [];
+  simonRound = 0;
+  nextSimonRound();
+}
+
+function nextSimonRound() {
+  simonRound++;
+  simonSeq.push(COLORS[Math.floor(Math.random()*4)]);
+  simonInput = [];
+  simonActive = false;
+  document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Watch the sequence...`;
+  disableSimon(true);
+  playSimonSequence(() => {
+    document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Repeat the sequence!`;
+    disableSimon(false);
+    simonActive = true;
+  });
+}
+
+function disableSimon(dis) {
+  document.querySelectorAll('.simon-btn').forEach(b => b.disabled = dis);
+}
+
+function playSimonSequence(done) {
+  let i = 0;
+  const step = () => {
+    if (i >= simonSeq.length) { setTimeout(done, 400); return; }
+    lightSimon(simonSeq[i]);
+    setTimeout(() => { unlightSimon(simonSeq[i]); i++; setTimeout(step, 200); }, 500);
+  };
+  setTimeout(step, 500);
+}
+
+function lightSimon(color) {
+  document.querySelector(`.simon-btn[data-color="${color}"]`).classList.add('lit');
+}
+function unlightSimon(color) {
+  document.querySelector(`.simon-btn[data-color="${color}"]`).classList.remove('lit');
+}
+
+function simonPress(color) {
+  if (!simonActive) return;
+  lightSimon(color); setTimeout(() => unlightSimon(color), 200);
+  simonInput.push(color);
+  const idx = simonInput.length - 1;
+  if (simonInput[idx] !== simonSeq[idx]) {
+    simonActive = false; disableSimon(true);
+    const fb = document.getElementById('blue-s2-fb');
+    fb.textContent = '✗ Wrong sequence — restarting.';
+    fb.className = 'feedback show err';
+    setTimeout(() => { fb.className='feedback'; simonSeq=[]; simonRound=0; nextSimonRound(); }, 1000);
+    return;
+  }
+  if (simonInput.length === simonSeq.length) {
+    simonActive = false; disableSimon(true);
+    if (simonRound >= simonMaxRounds) {
+      const fb = document.getElementById('blue-s2-fb');
+      fb.textContent = '✓ Sequence complete — network restoration protocol executed successfully!';
+      fb.className = 'feedback show ok';
+      setTimeout(signalMyFinish, 600);
+    } else {
+      setTimeout(nextSimonRound, 500);
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// RED TEAM LOGIC
+// ══════════════════════════════════════════
+
+// ── Maze ──────────────────────────────────
+const CELL = 30, COLS = 10, ROWS = 10;
+let playerPos = {x:0, y:0};
+const goal = {x:9, y:9};
+
+// Maze layout: 1 = wall, 0 = open
+const mazeGrid = [
+  [0,1,0,0,0,1,0,0,0,0],
+  [0,1,0,1,0,1,0,1,1,0],
+  [0,0,0,1,0,0,0,0,1,0],
+  [1,1,0,1,1,1,1,0,1,0],
+  [0,0,0,0,0,0,1,0,0,0],
+  [0,1,1,1,1,0,1,1,1,0],
+  [0,0,0,1,0,0,0,0,1,0],
+  [1,1,0,1,0,1,1,0,1,0],
+  [0,0,0,0,0,1,0,0,0,1],
+  [0,1,1,1,0,0,0,1,0,0]
+];
+
+function drawMaze() {
+  const canvas = document.getElementById('mazeCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,300,300);
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    const x=c*CELL, y=r*CELL;
+    if (mazeGrid[r][c]===1) {
+      ctx.fillStyle='#0e1a28'; ctx.fillRect(x,y,CELL,CELL);
+      ctx.strokeStyle='rgba(255,74,74,0.2)'; ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
+    } else {
+      ctx.fillStyle='#060d18'; ctx.fillRect(x,y,CELL,CELL);
+    }
+  }
+  // Goal
+  ctx.fillStyle='rgba(255,74,74,0.3)'; ctx.fillRect(goal.x*CELL,goal.y*CELL,CELL,CELL);
+  ctx.fillStyle='#ff4a4a'; ctx.font='16px serif';
+  ctx.fillText('⬛', goal.x*CELL+6, goal.y*CELL+20);
+  ctx.fillStyle='rgba(255,74,74,0.6)'; ctx.font='10px Share Tech Mono'; ctx.fillText('SRV',goal.x*CELL+2,goal.y*CELL+27);
+  // Player
+  ctx.fillStyle='rgba(255,74,74,0.8)'; ctx.fillRect(playerPos.x*CELL+6,playerPos.y*CELL+6,18,18);
+  ctx.fillStyle='#ff4a4a'; ctx.font='10px Share Tech Mono'; ctx.fillText('YOU',playerPos.x*CELL+2,playerPos.y*CELL+27);
+  // Grid lines
+  ctx.strokeStyle='rgba(74,158,255,0.06)';
+  for(let i=0;i<=COLS;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,300); ctx.stroke(); }
+  for(let j=0;j<=ROWS;j++){ ctx.beginPath(); ctx.moveTo(0,j*CELL); ctx.lineTo(300,j*CELL); ctx.stroke(); }
+}
+
+function mazeMove(dir) {
+  let nx=playerPos.x, ny=playerPos.y;
+  if(dir==='up')    ny--;
+  if(dir==='down')  ny++;
+  if(dir==='left')  nx--;
+  if(dir==='right') nx++;
+  if(nx<0||ny<0||nx>=COLS||ny>=ROWS) return;
+  if(mazeGrid[ny][nx]===1) {
+    document.getElementById('mazeStatus').textContent = '⚠ Blocked — find another path';
+    return;
+  }
+  playerPos={x:nx,y:ny};
+  drawMaze();
+  if(nx===goal.x && ny===goal.y) {
+    document.getElementById('mazeStatus').textContent = '✓ Server reached — deploying script...';
+    document.getElementById('redProgress').textContent = 'STEP 2/2';
+    setTimeout(() => {
+      document.getElementById('red-s1').classList.remove('active');
+      document.getElementById('red-s2').classList.add('active');
+    }, 800);
+  }
+}
+
+// Keyboard controls
+document.addEventListener('keydown', e => {
+  if (!redLane.classList.contains('active')) return;
+  const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right', w:'up', s:'down', a:'left', d:'right' };
+  if(map[e.key]) { e.preventDefault(); mazeMove(map[e.key]); }
+});
+
+// ── Code fix ──────────────────────────────────────────────────
+const codeFixes = { ce1: false, ce2: false, ce3: false };
+
+function editCode(el, id, correct) {
+  const cur = el.textContent.replace(/^"|"$/g,'').replace(/&quot;/g,'"');
+  const val = prompt(`Fix line — enter correct value:`, cur.replace(/"/g,''));
+  if (val === null) return;
+  const trimmed = val.trim();
+  if (trimmed === correct) {
+    el.textContent = `"${trimmed}"`;
+    el.style.cssText = 'color:var(--green);background:rgba(61,220,132,0.1);';
+    el.onclick = null; el.style.cursor='default';
+    codeFixes[id] = true;
+  } else {
+    el.style.animation='none'; el.offsetHeight; el.style.animation='';
+    el.style.color='var(--red)';
+    alert('Incorrect — re-examine the comments and reference data.');
+  }
+}
+
+// Fix ce3 (shred passes — just a number, no quotes)
+document.getElementById('ce3').onclick = function() {
+  const val = prompt('Fix shred passes (must be > 0 and secure):', '0');
+  if(val === null) return;
+  if(val.trim() === '7') {
+    this.textContent = '7';
+    this.style.cssText = 'color:var(--green);background:rgba(61,220,132,0.1);';
+    this.onclick = null; this.style.cursor='default';
+    codeFixes.ce3 = true;
+  } else {
+    alert('Incorrect — shred requires 7 passes for secure overwrite.');
+  }
+};
+
+function checkCode() {
+  const allFixed = codeFixes.ce1 && codeFixes.ce2 && codeFixes.ce3;
+  const fb = document.getElementById('red-s2-fb');
+  if (allFixed) {
+    fb.textContent = '✓ All errors fixed — executing cleanup script...';
+    fb.className = 'feedback show ok';
+    setTimeout(signalMyFinish, 700);
+  } else {
+    const remaining = Object.values(codeFixes).filter(v=>!v).length;
+    fb.textContent = `✗ ${remaining} error(s) still present — click the red highlighted values to fix them.`;
+    fb.className = 'feedback show err';
+  }
+}
+
+// ── Draw maze on load ─────────────────────────────────────────
+drawMaze();
+</script>
+</body>
+</html>

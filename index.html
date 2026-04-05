@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPERATION CUTLINE — Crisis Response Exercise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <style>
+    body { background: var(--bg); overflow: hidden; }
+
+    .scanline-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    }
+
+    .main-container {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 2rem; position: relative;
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(var(--accent-rgb), 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(var(--accent-rgb), 0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridShift 20s linear infinite;
+    }
+    @keyframes gridShift { from { background-position: 0 0; } to { background-position: 60px 60px; } }
+
+    .corner { position: fixed; width: 60px; height: 60px; }
+    .corner::before, .corner::after { content: ''; position: absolute; background: var(--accent); }
+    .corner::before { width: 2px; height: 100%; }
+    .corner::after { width: 100%; height: 2px; }
+    .corner.tl { top: 20px; left: 20px; }
+    .corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+    .corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
+    .corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
+
+    .status-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.5rem 2rem; background: rgba(var(--bg-rgb), 0.9);
+      border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      color: var(--muted); letter-spacing: 0.1em; z-index: 100;
+    }
+    .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .logo-block { text-align: center; margin-bottom: 3rem; }
+    .op-label {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.4em; color: var(--accent); text-transform: uppercase;
+      margin-bottom: 0.75rem; opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
+    }
+    .main-title {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+      font-size: clamp(3rem, 8vw, 6rem); letter-spacing: 0.05em;
+      color: var(--text); line-height: 0.9;
+      text-transform: uppercase;
+      opacity: 0; animation: fadeUp 0.6s 0.4s forwards;
+    }
+    .main-title span { color: var(--accent); }
+    .subtitle {
+      font-family: 'Barlow', sans-serif; font-weight: 300;
+      font-size: 0.9rem; letter-spacing: 0.25em; color: var(--muted);
+      margin-top: 1rem; text-transform: uppercase;
+      opacity: 0; animation: fadeUp 0.6s 0.6s forwards;
+    }
+
+    @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+
+    .brief-panel {
+      background: rgba(var(--accent-rgb), 0.04);
+      border: 1px solid rgba(var(--accent-rgb), 0.15);
+      border-left: 3px solid var(--accent);
+      padding: 1.25rem 1.75rem; max-width: 680px; width: 100%;
+      margin-bottom: 2.5rem; font-family: 'Barlow', sans-serif;
+      font-size: 0.85rem; line-height: 1.7; color: var(--muted);
+      opacity: 0; animation: fadeUp 0.6s 0.8s forwards;
+    }
+    .brief-panel strong { color: var(--text); font-weight: 500; }
+
+    .team-selection {
+      display: flex; gap: 1.5rem; margin-bottom: 2rem;
+      opacity: 0; animation: fadeUp 0.6s 1s forwards;
+    }
+
+    .team-btn {
+      position: relative; padding: 0; border: none; background: none;
+      cursor: pointer; width: 220px; overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .team-btn:hover { transform: translateY(-3px); }
+    .team-btn:hover .team-card { border-color: var(--team-color); }
+    .team-btn:hover .team-card::before { opacity: 1; }
+    .team-btn:active { transform: translateY(0); }
+
+    .team-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 2rem 1.5rem;
+      transition: border-color 0.3s;
+      position: relative; overflow: hidden;
+      background: var(--bg-card);
+    }
+    .team-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(var(--team-rgb), 0.08), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+
+    .team-card.blue { --team-color: var(--blue); --team-rgb: var(--blue-rgb); }
+    .team-card.red  { --team-color: var(--red);  --team-rgb: var(--red-rgb); }
+
+    .team-indicator {
+      width: 40px; height: 3px;
+      background: var(--team-color); margin-bottom: 1.25rem;
+    }
+    .team-name {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: 1.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text); margin-bottom: 0.5rem;
+    }
+    .team-name span { color: var(--team-color); }
+    .team-role {
+      font-family: 'Barlow', sans-serif; font-weight: 300;
+      font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1.25rem;
+    }
+    .team-desc {
+      font-family: 'Barlow', sans-serif; font-size: 0.8rem;
+      line-height: 1.6; color: var(--muted); text-align: left;
+    }
+    .team-enter {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 1.5rem; font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 0.15em; color: var(--team-color);
+      text-transform: uppercase;
+    }
+    .team-enter::after { content: '→'; transition: transform 0.2s; }
+    .team-btn:hover .team-enter::after { transform: translateX(4px); }
+
+    .mission-phases {
+      display: flex; gap: 0; max-width: 680px; width: 100%;
+      opacity: 0; animation: fadeUp 0.6s 1.2s forwards;
+      border: 1px solid rgba(var(--accent-rgb), 0.1);
+    }
+    .phase {
+      flex: 1; padding: 0.75rem 1rem;
+      border-right: 1px solid rgba(var(--accent-rgb), 0.1);
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .phase:last-child { border-right: none; }
+    .phase-num { font-size: 0.55rem; color: var(--accent); letter-spacing: 0.2em; margin-bottom: 0.25rem; }
+    .phase-name { font-size: 0.7rem; color: var(--muted); }
+
+    .alert-ticker {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(var(--red-rgb), 0.1);
+      border-top: 1px solid rgba(var(--red-rgb), 0.3);
+      padding: 0.4rem 0; overflow: hidden;
+    }
+    .ticker-inner {
+      display: flex; gap: 4rem;
+      animation: ticker 25s linear infinite;
+      white-space: nowrap;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      color: var(--red); letter-spacing: 0.1em;
+    }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  </style>
+</head>
+<body>
+  <div class="scanline-overlay"></div>
+  <div class="grid-bg"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="status-bar">
+    <span><span class="status-dot"></span>EXERCISE MODE — SIMULATION ACTIVE</span>
+    <span id="clock"></span>
+    <span>CLASSIFICATION: EXERCISE // UNCLASSIFIED</span>
+  </div>
+
+  <div class="main-container">
+    <div class="logo-block">
+      <div class="op-label">Joint Crisis Response Exercise</div>
+      <div class="main-title">OPERATION<br><span>CUTLINE</span></div>
+      <div class="subtitle">Submarine Cable Infrastructure Incident</div>
+    </div>
+
+    <div class="brief-panel">
+      <strong>SITUATION REPORT:</strong> At 04:17 UTC, monitoring systems detected a critical loss of signal across multiple submarine fiber-optic cable segments in the North Atlantic corridor. Preliminary analysis indicates <strong>physical cable damage</strong> of unknown origin. All response teams are to deploy immediately. Two parallel response tracks are activated.
+    </div>
+
+    <div class="team-selection">
+      <button class="team-btn" onclick="selectTeam('blue')">
+        <div class="team-card blue">
+          <div class="team-indicator"></div>
+          <div class="team-name"><span>Blue</span> Team</div>
+          <div class="team-role">Network Defense & Restoration</div>
+          <div class="team-desc">Diagnose the incident, locate the damage, and restore full network operations before the situation escalates.</div>
+          <div class="team-enter">Enter briefing</div>
+        </div>
+      </button>
+
+      <button class="team-btn" onclick="selectTeam('red')">
+        <div class="team-card red">
+          <div class="team-indicator"></div>
+          <div class="team-name"><span>Red</span> Team</div>
+          <div class="team-role">Threat Intelligence & Interdiction</div>
+          <div class="team-desc">Identify the threat actor, trace the origin of the attack, and neutralize all compromised systems before recovery begins.</div>
+          <div class="team-enter">Enter briefing</div>
+        </div>
+      </button>
+    </div>
+
+    <div class="mission-phases">
+      <div class="phase">
+        <div class="phase-num">PHASE 01</div>
+        <div class="phase-name">Problem Identification</div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">PHASE 02</div>
+        <div class="phase-name">Locating the Problem</div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">PHASE 03 // PARALLEL</div>
+        <div class="phase-name">Fixing vs. Neutralizing</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-ticker">
+    <div class="ticker-inner">
+      <span>⚠ ALERT: MAJOR CONNECTIVITY LOSS — NORTH ATLANTIC CORRIDOR</span>
+      <span>▸ AFFECTED NODES: TAT-14, AC-1, YELLOW/AC-2</span>
+      <span>▸ ESTIMATED IMPACT: 847,000 CIRCUITS DEGRADED</span>
+      <span>▸ REPAIR VESSEL STANBY — AWAITING DAMAGE COORDINATES</span>
+      <span>⚠ ALERT: MAJOR CONNECTIVITY LOSS — NORTH ATLANTIC CORRIDOR</span>
+      <span>▸ AFFECTED NODES: TAT-14, AC-1, YELLOW/AC-2</span>
+      <span>▸ ESTIMATED IMPACT: 847,000 CIRCUITS DEGRADED</span>
+      <span>▸ REPAIR VESSEL STANBY — AWAITING DAMAGE COORDINATES</span>
+    </div>
+  </div>
+
+  <script src="js/global.js"></script>
+  <script>
+    function selectTeam(team) {
+      localStorage.setItem('crisisTeam', team);
+      localStorage.setItem('crisisPhase', '1');
+      localStorage.setItem('crisisStep', '1');
+      window.location.href = `pages/phase1.html`;
+    }
+  </script>
+</body>
+</html>

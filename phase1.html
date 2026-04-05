@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 1 — Problem Identification | CUTLINE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css">
+  <style>
+    .network-svg { width: 100%; max-width: 760px; height: auto; }
+    .node { cursor: pointer; transition: opacity 0.2s; }
+    .node:hover { opacity: 0.8; }
+    .link-normal { stroke: #4a9eff; stroke-width: 2; }
+    .link-degraded { stroke: #f5c542; stroke-width: 2; stroke-dasharray: 8,4; }
+    .link-down { stroke: #ff4a4a; stroke-width: 2.5; stroke-dasharray: 4,4; animation: dashAnim 1s linear infinite; }
+    @keyframes dashAnim { to { stroke-dashoffset: -16; } }
+
+    .otdr-chart { width: 100%; height: 160px; background: #060810; border: 1px solid rgba(74,158,255,0.15); position: relative; overflow: hidden; }
+    .otdr-line { fill: none; stroke: var(--green); stroke-width: 1.5; }
+    .otdr-fault { fill: none; stroke: var(--red); stroke-width: 2; }
+    .otdr-label { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; fill: var(--muted); }
+
+    .ip-segment {
+      display: inline-block; padding: 0.15rem 0.4rem;
+      background: rgba(74,158,255,0.1); border: 1px solid rgba(74,158,255,0.2);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: var(--text);
+      margin: 0.1rem;
+    }
+    .ip-segment.blank {
+      background: rgba(255,255,255,0.05); color: var(--accent); cursor: text;
+      min-width: 3rem; border-style: dashed;
+    }
+
+    .step-section { display: none; }
+    .step-section.active { display: block; animation: slideIn 0.4s ease; }
+
+    .route-table { font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; }
+    .route-row { display: flex; gap: 1rem; padding: 0.4rem 0.6rem; border-bottom: 1px solid rgba(74,158,255,0.06); align-items: center; }
+    .route-row:hover { background: rgba(74,158,255,0.04); }
+    .route-dest { color: var(--text); width: 150px; }
+    .route-gw   { color: var(--muted); width: 140px; }
+    .route-iface { color: var(--accent); width: 80px; }
+    .route-status { font-size: 0.6rem; padding: 0.1rem 0.4rem; }
+    .status-up   { background: rgba(61,220,132,0.1); color: var(--green); border: 1px solid rgba(61,220,132,0.3); }
+    .status-down { background: rgba(255,74,74,0.1);   color: var(--red);   border: 1px solid rgba(255,74,74,0.3); animation: blink 1.5s infinite; }
+    .status-deg  { background: rgba(245,197,66,0.1);  color: var(--yellow); border: 1px solid rgba(245,197,66,0.3); }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.4} }
+  </style>
+</head>
+<body>
+<div class="page-layout">
+  <div class="top-bar" id="topBar"></div>
+
+  <div class="phase-content">
+    <div class="step-progress" id="stepProgress"></div>
+
+    <!-- ═══════════════════════════════════ STEP 1: Network Routes ═══ -->
+    <div class="step-section active" id="step1">
+      <div class="phase-header">
+        <div class="phase-number">PHASE 01 · ENIGMA 1/3</div>
+        <div class="phase-title">Network Route Analysis</div>
+        <div class="phase-desc">The NOC has pulled the current routing table from the GÉANT backbone. Identify which network segment is experiencing the outage based on the route status indicators.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-tag">Routing Table</span>
+          <span class="panel-title">GÉANT Backbone — Core Router EU-ATL-01</span>
+        </div>
+
+        <div class="route-table">
+          <div class="route-row" style="border-bottom:1px solid rgba(74,158,255,0.15)">
+            <span class="route-dest" style="color:var(--muted)">DESTINATION</span>
+            <span class="route-gw"   style="color:var(--muted)">GATEWAY</span>
+            <span class="route-iface" style="color:var(--muted)">INTERFACE</span>
+            <span class="route-status" style="color:var(--muted);font-size:0.6rem;letter-spacing:0.1em">STATUS</span>
+            <span style="color:var(--muted);font-size:0.6rem;letter-spacing:0.1em;font-family:'Share Tech Mono',monospace">RTT</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">10.0.1.0/24</span>
+            <span class="route-gw">10.0.0.1</span>
+            <span class="route-iface">eth0</span>
+            <span class="route-status status-up">UP</span>
+            <span class="mono small muted">2ms</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">10.0.2.0/24</span>
+            <span class="route-gw">10.0.0.2</span>
+            <span class="route-iface">eth0</span>
+            <span class="route-status status-up">UP</span>
+            <span class="mono small muted">3ms</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">172.16.8.0/22</span>
+            <span class="route-gw">172.16.0.1</span>
+            <span class="route-iface">eth1</span>
+            <span class="route-status status-deg">DEGRADED</span>
+            <span class="mono small yellow">47ms</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">172.16.12.0/22</span>
+            <span class="route-gw">172.16.0.1</span>
+            <span class="route-iface">eth1</span>
+            <span class="route-status status-up">UP</span>
+            <span class="mono small muted">5ms</span>
+          </div>
+          <div class="route-row" style="background:rgba(255,74,74,0.05)">
+            <span class="route-dest" style="color:var(--red)">192.168.48.0/21</span>
+            <span class="route-gw" style="color:var(--red)">192.168.0.1</span>
+            <span class="route-iface" style="color:var(--red)">eth2</span>
+            <span class="route-status status-down">DOWN</span>
+            <span class="mono small red">∞</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">192.168.64.0/21</span>
+            <span class="route-gw">192.168.0.2</span>
+            <span class="route-iface">eth2</span>
+            <span class="route-status status-up">UP</span>
+            <span class="mono small muted">4ms</span>
+          </div>
+          <div class="route-row">
+            <span class="route-dest">203.0.113.0/24</span>
+            <span class="route-gw">203.0.113.1</span>
+            <span class="route-iface">eth3</span>
+            <span class="route-status status-up">UP</span>
+            <span class="mono small muted">11ms</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="enigma-block" id="e1block">
+        <div class="enigma-q">Which network segment (CIDR notation) is completely down? Enter the destination network address.</div>
+        <div class="enigma-hint">// Look for status DOWN with infinite RTT</div>
+        <div class="flex gap1 mt2">
+          <input class="mono-input" id="e1input" placeholder="e.g. 10.0.0.0/24" style="max-width:260px" autocomplete="off" spellcheck="false">
+          <button class="btn btn-primary" onclick="checkE1()">VERIFY</button>
+        </div>
+        <div class="feedback" id="e1fb"></div>
+      </div>
+    </div><!-- /step1 -->
+
+    <!-- ═══════════════════════════════════ STEP 2: OTDR Reading ═══ -->
+    <div class="step-section" id="step2">
+      <div class="phase-header">
+        <div class="phase-number">PHASE 01 · ENIGMA 2/3</div>
+        <div class="phase-title">OTDR Trace Analysis</div>
+        <div class="phase-desc">Field technicians have performed an Optical Time Domain Reflectometer (OTDR) test on the affected cable segment. Analyse the trace to determine the distance of the fault from the injection point.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-tag">OTDR Trace</span>
+          <span class="panel-title">Segment SEG-ATL-48 — TAT-14 Cable System</span>
+        </div>
+        <div class="label" style="margin-bottom:0.75rem">Backscatter power (dB) vs. Distance (km)</div>
+
+        <svg class="otdr-chart" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid lines -->
+          <line x1="60" y1="10" x2="60" y2="140" stroke="rgba(74,158,255,0.1)" stroke-width="1"/>
+          <line x1="60" y1="140" x2="680" y2="140" stroke="rgba(74,158,255,0.1)" stroke-width="1"/>
+          <line x1="60" y1="40" x2="680" y2="40" stroke="rgba(74,158,255,0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="70" x2="680" y2="70" stroke="rgba(74,158,255,0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="60" y1="100" x2="680" y2="100" stroke="rgba(74,158,255,0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+
+          <!-- Distance markers -->
+          <text x="60"  y="155" class="otdr-label" text-anchor="middle">0</text>
+          <text x="168" y="155" class="otdr-label" text-anchor="middle">100</text>
+          <text x="276" y="155" class="otdr-label" text-anchor="middle">200</text>
+          <text x="384" y="155" class="otdr-label" text-anchor="middle">300</text>
+          <text x="492" y="155" class="otdr-label" text-anchor="middle">400</text>
+          <text x="600" y="155" class="otdr-label" text-anchor="middle">500</text>
+          <text x="350" y="168" class="otdr-label" text-anchor="middle" fill="#6b7a8d">Distance (km)</text>
+
+          <!-- dB axis labels -->
+          <text x="55" y="15"  class="otdr-label" text-anchor="end">0dB</text>
+          <text x="55" y="45"  class="otdr-label" text-anchor="end">-10</text>
+          <text x="55" y="75"  class="otdr-label" text-anchor="end">-20</text>
+          <text x="55" y="105" class="otdr-label" text-anchor="end">-30</text>
+          <text x="55" y="135" class="otdr-label" text-anchor="end">-40</text>
+
+          <!-- Normal backscatter decline -->
+          <polyline class="otdr-line" points="60,18 168,32 276,46 330,53 338,55"/>
+
+          <!-- Fault spike at ~340km -->
+          <polyline class="otdr-fault" points="338,55 342,22 346,130"/>
+
+          <!-- Dead zone after fault -->
+          <polyline points="346,130 680,132" fill="none" stroke="#ff4a4a" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Fault annotation -->
+          <line x1="342" y1="22" x2="342" y2="140" stroke="rgba(255,74,74,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+          <text x="348" y="35" fill="#ff4a4a" font-family="'Share Tech Mono',monospace" font-size="9">FAULT EVENT</text>
+          <text x="348" y="47" fill="#ff4a4a" font-family="'Share Tech Mono',monospace" font-size="8">↓ sharp reflection</text>
+
+          <!-- Distance cursor -->
+          <text x="342" y="153" fill="#ff4a4a" font-family="'Share Tech Mono',monospace" font-size="9" text-anchor="middle">?</text>
+
+          <!-- Label normal section -->
+          <text x="200" y="28" fill="#3ddc84" font-family="'Share Tech Mono',monospace" font-size="8">Normal Rayleigh backscatter</text>
+        </svg>
+
+        <div class="mt2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem">
+          <div>
+            <div class="label">Pulse Width</div>
+            <div class="mono small">1000 ns</div>
+          </div>
+          <div>
+            <div class="label">Range</div>
+            <div class="mono small">500 km</div>
+          </div>
+          <div>
+            <div class="label">Index of Refraction</div>
+            <div class="mono small">1.4682</div>
+          </div>
+          <div>
+            <div class="label">Cursor position (raw)</div>
+            <div class="mono small accent">2.832 μs one-way</div>
+          </div>
+          <div>
+            <div class="label">Speed of light in fiber</div>
+            <div class="mono small">~204,190 km/s</div>
+          </div>
+          <div>
+            <div class="label">Fiber length (total)</div>
+            <div class="mono small">500 km</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="enigma-block" id="e2block">
+        <div class="enigma-q">Using the OTDR cursor reading of <strong class="accent">2.832 μs</strong> one-way travel time and the speed of light in fiber (<strong class="accent">204,190 km/s</strong>), calculate the fault distance from the injection point.</div>
+        <div class="enigma-hint">// Distance = Time × Speed — round to nearest km</div>
+        <div class="flex gap1 mt2 items-center">
+          <input class="mono-input" id="e2input" placeholder="distance in km" style="max-width:200px" autocomplete="off">
+          <span class="mono muted small">km</span>
+          <button class="btn btn-primary" onclick="checkE2()">VERIFY</button>
+        </div>
+        <div class="feedback" id="e2fb"></div>
+        <div class="mt2 muted small">Hint: 2.832 μs = 0.000002832 s &nbsp;|&nbsp; 0.000002832 × 204,190 = ?</div>
+      </div>
+    </div><!-- /step2 -->
+
+    <!-- ═══════════════════════════════════ STEP 3: Hacking Check ═══ -->
+    <div class="step-section" id="step3">
+      <div class="phase-header">
+        <div class="phase-number">PHASE 01 · ENIGMA 3/3</div>
+        <div class="phase-title">Intrusion Detection Analysis</div>
+        <div class="phase-desc">While the physical fault is being investigated, the security team must rule out a simultaneous cyberattack. Analyse the IDS logs for the management interfaces of the affected segment.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-tag">IDS Log Export</span>
+          <span class="panel-title">Snort/Suricata — Interface eth2 — Last 6h</span>
+        </div>
+
+        <div class="terminal" id="ids-terminal">
+          <div><span class="t-prompt">[04:11:02 UTC]</span> <span class="t-output">NORMAL — BGP keepalive 10.0.4.1 → 10.0.4.2 OK</span></div>
+          <div><span class="t-prompt">[04:12:18 UTC]</span> <span class="t-output">NORMAL — SNMP poll from NMS 10.0.1.5</span></div>
+          <div><span class="t-prompt">[04:14:55 UTC]</span> <span class="t-warn">[WARN] Link flap detected — interface eth2 — duration 0.3s</span></div>
+          <div><span class="t-prompt">[04:15:01 UTC]</span> <span class="t-output">NORMAL — BGP session restart 192.168.48.1 → 192.168.0.1</span></div>
+          <div><span class="t-prompt">[04:15:03 UTC]</span> <span class="t-error">[ALERT] Interface eth2 DOWN — no carrier signal — physical fault suspected</span></div>
+          <div><span class="t-prompt">[04:15:04 UTC]</span> <span class="t-output">INFO — Failover route activated via eth1 (degraded)</span></div>
+          <div><span class="t-prompt">[04:16:22 UTC]</span> <span class="t-output">NORMAL — NetFlow baseline: 0 packets/s on eth2 (expected, interface down)</span></div>
+          <div><span class="t-prompt">[04:17:10 UTC]</span> <span class="t-output">NORMAL — SNMP trap sent to NMS for interface status change</span></div>
+          <div><span class="t-prompt">[04:18:30 UTC]</span> <span class="t-output">NORMAL — No anomalous TCP sessions in pre-fault window (+/- 10min)</span></div>
+          <div><span class="t-prompt">[04:20:00 UTC]</span> <span class="t-output">NORMAL — SSH authentication log: 0 failed attempts last 6h</span></div>
+          <div><span class="t-prompt">[04:21:44 UTC]</span> <span class="t-output">NORMAL — No port scans detected on management VLAN</span></div>
+          <div><span class="t-prompt">[04:22:00 UTC]</span> <span class="t-output">NORMAL — ARP table stable — no spoofing indicators</span></div>
+          <div><span class="t-prompt">[04:23:15 UTC]</span> <span class="t-output">INFO — Zero malicious signatures matched in eth2 traffic window</span></div>
+          <div><span class="t-prompt">[04:24:00 UTC]</span> <span class="t-warn">[SUMMARY] IDS analysis complete — 0 intrusion events — 1 physical fault event</span></div>
+        </div>
+      </div>
+
+      <div class="enigma-block" id="e3block">
+        <div class="enigma-q">Based on the IDS log analysis, was a remote cyberattack detected on the affected network segment at the time of the outage?</div>
+
+        <div class="choice-grid" id="mcq3">
+          <button class="choice-btn" onclick="answerMCQ(this, false)">
+            <span class="choice-letter">A</span>
+            <span>Yes — SSH brute-force attack detected 2 minutes before the fault</span>
+          </button>
+          <button class="choice-btn" onclick="answerMCQ(this, false)">
+            <span class="choice-letter">B</span>
+            <span>Yes — ARP spoofing attack coincided with the interface going down</span>
+          </button>
+          <button class="choice-btn" onclick="answerMCQ(this, true)">
+            <span class="choice-letter">C</span>
+            <span>No — All IDS checks are clean. The fault is purely physical in nature</span>
+          </button>
+          <button class="choice-btn" onclick="answerMCQ(this, false)">
+            <span class="choice-letter">D</span>
+            <span>Inconclusive — logs were wiped by the attacker before analysis</span>
+          </button>
+        </div>
+        <div class="feedback" id="e3fb"></div>
+      </div>
+
+      <button class="continue-btn" id="continueBtn" onclick="goToPhase2()">
+        ▸ PHASE 01 COMPLETE — PROCEED TO PHASE 02: LOCATE THE DAMAGE
+      </button>
+    </div><!-- /step3 -->
+
+  </div>
+</div>
+
+<script src="../js/global.js"></script>
+<script>
+  const team = State.team;
+  renderTopBar('01', 'PROBLEM IDENTIFICATION');
+
+  const steps = ['1 · Network Routes', '2 · OTDR Analysis', '3 · Intrusion Check'];
+  document.getElementById('stepProgress').innerHTML = renderSteps(steps, 0);
+  let currentStep = 1;
+
+  function showStep(n) {
+    document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    document.getElementById('stepProgress').innerHTML = renderSteps(steps, n - 1);
+    currentStep = n;
+    window.scrollTo(0,0);
+  }
+
+  // E1 — Network route (answer: 192.168.48.0/21)
+  document.getElementById('e1input').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
+  function checkE1() {
+    const inp = document.getElementById('e1input');
+    const fb  = document.getElementById('e1fb');
+    const val = inp.value.trim();
+    if (val === '192.168.48.0/21') {
+      fb.textContent = '✓ Correct — Segment 192.168.48.0/21 via interface eth2 is DOWN. Proceeding to physical layer analysis.';
+      fb.className = 'feedback show ok';
+      inp.disabled = true;
+      document.getElementById('e1block').classList.add('success');
+      setTimeout(() => showStep(2), 1000);
+    } else {
+      fb.textContent = '✗ Incorrect — check the routing table for the entry with status DOWN and RTT ∞';
+      fb.className = 'feedback show err';
+    }
+  }
+
+  // E2 — OTDR distance (answer: 578 km — 0.000002832 × 204190 ≈ 578 km)
+  document.getElementById('e2input').addEventListener('keydown', e => { if(e.key==='Enter') checkE2(); });
+  function checkE2() {
+    const inp = document.getElementById('e2input');
+    const fb  = document.getElementById('e2fb');
+    const val = parseInt(inp.value.trim());
+    // Accept 578 ± 2
+    if (!isNaN(val) && Math.abs(val - 578) <= 2) {
+      fb.textContent = '✓ Confirmed — Fault located at ' + val + ' km from injection point. Consistent with known cable route coordinates.';
+      fb.className = 'feedback show ok';
+      inp.disabled = true;
+      document.getElementById('e2block').classList.add('success');
+      setTimeout(() => showStep(3), 1000);
+    } else {
+      fb.textContent = '✗ Recalculate — Remember: Distance = Time(s) × Speed(km/s). Use 2.832 × 10⁻⁶ s and 204,190 km/s.';
+      fb.className = 'feedback show err';
+    }
+  }
+
+  // E3 — MCQ
+  function answerMCQ(btn, isCorrect) {
+    const btns = document.querySelectorAll('#mcq3 .choice-btn');
+    btns.forEach(b => b.style.pointerEvents = 'none');
+    if (isCorrect) {
+      btn.classList.add('correct');
+      const fb = document.getElementById('e3fb');
+      fb.textContent = '✓ Confirmed — No remote intrusion detected. The incident is classified as a physical infrastructure failure. Proceed to Phase 2.';
+      fb.className = 'feedback show ok';
+      document.getElementById('e3block').classList.add('success');
+      document.getElementById('continueBtn').classList.add('show');
+    } else {
+      btn.classList.add('wrong');
+      btns.forEach(b => { if(b.querySelector('.choice-letter').textContent === 'C') b.classList.add('correct'); });
+      const fb = document.getElementById('e3fb');
+      fb.textContent = '✗ Incorrect — Re-read the IDS logs. There are zero intrusion signatures and zero anomalous sessions detected.';
+      fb.className = 'feedback show err';
+      setTimeout(() => {
+        btns.forEach(b => { b.style.pointerEvents = ''; b.classList.remove('wrong','correct'); });
+        fb.className = 'feedback';
+      }, 2500);
+    }
+  }
+
+  function goToPhase2() {
+    localStorage.setItem('crisisPhase', '2');
+    window.location.href = 'phase2.html';
+  }
+</script>
+</body>
+</html>
