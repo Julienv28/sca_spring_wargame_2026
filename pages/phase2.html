@@ -4,428 +4,491 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phase 2 — Locating the Problem | CUTLINE</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
   <style>
-    .map-container {
-      background: #060d16;
-      border: 1px solid rgba(74,158,255,0.15);
-      position: relative; overflow: hidden;
+    /* ─── Maps & ASCII ─── */
+    .ascii-map {
+      background: #020609; border: 1px solid rgba(74,158,255,0.1);
+      padding: 1rem 1.25rem; overflow-x: auto;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.68rem;
+      line-height: 1.45; color: #7ab4e0; letter-spacing: 0.05em;
+      position: relative;
     }
-    .map-svg { width: 100%; height: auto; display: block; }
+    .ascii-map .land  { color: #3d5a38; }
+    .ascii-map .sea   { color: #0d2a3d; }
+    .ascii-map .coast { color: #4a7fa5; }
+    .ascii-map .label { color: rgba(74,158,255,0.6); }
+    .ascii-map .hlight{ color: #f5c542; font-weight: bold; }
 
-    .cable-segment { stroke: #4a9eff; stroke-width: 2; fill: none; stroke-dasharray: none; }
-    .cable-damaged { stroke: #ff4a4a; stroke-width: 3; fill: none; stroke-dasharray: 6,4; animation: dashAnim 1.5s linear infinite; }
+    /* ─── AIS Table ─── */
+    .ais-table { width: 100%; border-collapse: collapse; }
+    .ais-table th {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.58rem;
+      letter-spacing: 0.12em; color: var(--muted); text-align: left;
+      padding: 0.4rem 0.6rem; border-bottom: 1px solid rgba(74,158,255,0.12);
+    }
+    .ais-table td {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.68rem;
+      padding: 0.38rem 0.6rem; border-bottom: 1px solid rgba(74,158,255,0.05);
+      color: var(--text);
+    }
+    .ais-table tr:hover td { background: rgba(74,158,255,0.02); }
+    .ais-table tr.suspect td { background: rgba(255,74,74,0.03); }
+    .ais-table tr.mislead td { background: rgba(245,197,66,0.02); }
+    .ais-dark { color: var(--red) !important; font-weight: bold; }
+    .ais-ok   { color: var(--green) !important; }
+    .ais-warn { color: var(--yellow) !important; }
+    .mmsi-link { cursor: pointer; text-decoration: underline; color: var(--accent); }
+    .mmsi-link:hover { color: #fff; }
+
+    /* ─── Cable map ─── */
+    .cable-map { background: #030810; border: 1px solid rgba(74,158,255,0.12); }
+    .cable-svg  { width: 100%; height: auto; display: block; }
+    .cable-ok   { stroke: #2a5a8a; stroke-width: 2.5; fill: none; }
+    .cable-dmg  { stroke: var(--red); stroke-width: 3; fill: none; stroke-dasharray: 8,5; animation: dashAnim 1.2s linear infinite; }
+    .cable-lbl  { font-family: 'Share Tech Mono', monospace; font-size: 9px; fill: rgba(74,158,255,0.5); }
+    .grid-ln    { stroke: rgba(74,158,255,0.06); stroke-width: 1; }
+    .coord-lbl  { font-family: 'Share Tech Mono', monospace; font-size: 8px; fill: rgba(107,122,141,0.6); }
+    .land-fill  { fill: #1a2d1a; stroke: #2d4a2d; stroke-width: 1; }
+    .sea-fill   { fill: #030d18; }
+    .ship-icon  { font-size: 10px; }
+    .ship-track { fill: none; stroke-width: 1.5; stroke-dasharray: 4,3; }
+    .s-normal   { stroke: rgba(74,158,255,0.35); }
+    .s-dark     { stroke: rgba(255,74,74,0.7); animation: dashAnim 1s linear infinite; }
+    .s-warn     { stroke: rgba(245,197,66,0.6); }
+    .zone-circle{ fill: rgba(255,74,74,0.07); stroke: var(--red); stroke-width: 1.5; stroke-dasharray: 5,4; }
     @keyframes dashAnim { to { stroke-dashoffset: -20; } }
 
-    .ship-track { fill: none; stroke-width: 1.5; stroke-dasharray: 4,3; }
-    .ship-normal { stroke: rgba(74,158,255,0.5); }
-    .ship-anomaly { stroke: rgba(245,197,66,0.8); }
-    .ship-suspect { stroke: rgba(255,74,74,0.9); animation: dashAnim 1s linear infinite; }
-
-    .grid-line { stroke: rgba(74,158,255,0.06); stroke-width: 1; }
-    .coord-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; fill: rgba(107,122,141,0.7); }
-
-    .vessel-row {
-      display: grid; grid-template-columns: 80px 160px 100px 100px 120px 80px;
-      gap: 0.5rem; padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid rgba(74,158,255,0.06);
-      align-items: center; font-size: 0.75rem;
+    /* ─── Vessel DB ─── */
+    .db-row {
+      display: grid; grid-template-columns: 130px 1fr 130px 100px 80px;
+      gap: 0.5rem; padding: 0.4rem 0.75rem;
+      border-bottom: 1px solid rgba(74,158,255,0.05);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.68rem;
+      align-items: center;
     }
-    .vessel-row.header { color: var(--muted); font-size: 0.6rem; letter-spacing: 0.1em; font-family: 'Share Tech Mono', monospace; border-bottom: 1px solid rgba(74,158,255,0.15); }
-    .vessel-row:hover { background: rgba(74,158,255,0.03); }
-    .vessel-row.suspect { background: rgba(255,74,74,0.05); }
-    .imo { font-family: 'Share Tech Mono', monospace; color: var(--accent); font-size: 0.7rem; }
-    .flag-pill { display: inline-block; padding: 0.1rem 0.4rem; font-size: 0.6rem; font-family: 'Share Tech Mono', monospace; letter-spacing: 0.1em; }
+    .db-row.header { color: var(--muted); font-size: 0.56rem; letter-spacing: 0.12em; border-bottom: 1px solid rgba(74,158,255,0.15); }
+    .db-row:hover { background: rgba(74,158,255,0.02); }
 
+    /* ─── Large vessel DB (step 3) ─── */
+    .vdb-search {
+      display: flex; gap: 0.75rem; margin-bottom: 0.75rem;
+    }
+    .vdb-table { width: 100%; border-collapse: collapse; max-height: 320px; overflow-y: auto; display: block; }
+    .vdb-table th {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.56rem;
+      letter-spacing: 0.1em; color: var(--muted); text-align: left;
+      padding: 0.35rem 0.5rem; border-bottom: 1px solid rgba(74,158,255,0.15);
+      position: sticky; top: 0; background: #06101a;
+    }
+    .vdb-table td {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(74,158,255,0.04);
+    }
+    .vdb-table tr:hover td { background: rgba(74,158,255,0.03); }
+    .vdb-table tr.target-row td { background: rgba(255,74,74,0.05); }
+    .vdb-table .signal-lost { color: var(--red); animation: blink 2s infinite; }
+
+    /* ─── Step sections ─── */
     .step-section { display: none; }
     .step-section.active { display: block; animation: slideIn 0.4s ease; }
 
-    .crosshair-target {
-      cursor: crosshair;
+    /* ─── Enemy note ─── */
+    .enemy-note {
+      background: #0a0505;
+      border: 1px solid rgba(255,74,74,0.25);
+      padding: 0.75rem 1rem; margin-top: 1.25rem;
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      color: rgba(255,180,180,0.6); line-height: 1.8;
+      position: relative;
     }
-    .target-zone { fill: rgba(255,74,74,0.1); stroke: #ff4a4a; stroke-width: 1.5; stroke-dasharray: 4,3; }
-    .target-marker { fill: none; stroke: var(--yellow); stroke-width: 2; cursor: pointer; }
-    .target-marker:hover { stroke: var(--accent); }
-
-    .db-row {
-      display: grid; grid-template-columns: 90px 1fr 120px 100px 80px;
-      gap: 0.75rem; padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid rgba(74,158,255,0.06);
-      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
-      align-items: center;
+    .enemy-note::before {
+      content: '⚠ INTERCEPTED COMMUNICATION — FOREIGN LANGUAGE';
+      display: block; font-size: 0.52rem; letter-spacing: 0.15em;
+      color: var(--red); margin-bottom: 0.5rem; opacity: 0.7;
     }
-    .db-row.header { color: var(--muted); font-size: 0.58rem; letter-spacing: 0.1em; border-bottom: 1px solid rgba(74,158,255,0.15); }
-    .db-row:hover { background: rgba(74,158,255,0.03); }
-
-    .sat-img {
-      background: #030810;
-      border: 1px solid rgba(74,158,255,0.15);
-      padding: 1rem;
-    }
-
-    /* Satellite image simulation */
-    .sat-canvas { width: 100%; height: 240px; position: relative; background: #010308; overflow: hidden; }
-    .sea-noise { position: absolute; inset: 0; opacity: 0.6; }
-    .vessel-dot {
-      position: absolute; width: 8px; height: 8px;
-      border: 1px solid; border-radius: 0;
-      transform: translate(-50%, -50%);
-      cursor: pointer;
-    }
-    .vessel-dot::after {
-      content: attr(data-label);
-      position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-      font-family: 'Share Tech Mono', monospace; font-size: 8px;
-      white-space: nowrap; letter-spacing: 0.05em;
-    }
-    .vessel-dot.normal { border-color: rgba(74,158,255,0.7); background: rgba(74,158,255,0.2); }
-    .vessel-dot.normal::after { color: rgba(74,158,255,0.7); }
-    .vessel-dot.suspect { border-color: #ff4a4a; background: rgba(255,74,74,0.3); animation: pulseRed 1.2s infinite; }
-    .vessel-dot.suspect::after { color: #ff4a4a; }
-    @keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(255,74,74,0.4)} 50%{box-shadow:0 0 0 8px rgba(255,74,74,0)} }
-    .vessel-dot.ambiguous { border-color: rgba(245,197,66,0.8); background: rgba(245,197,66,0.2); }
-    .vessel-dot.ambiguous::after { color: rgba(245,197,66,0.8); }
-
-    .crosshair-marker {
-      position: absolute; pointer-events: none;
-      width: 20px; height: 20px; border: 2px solid var(--red);
-      transform: translate(-50%,-50%);
-    }
-    .crosshair-marker::before, .crosshair-marker::after {
-      content: ''; position: absolute; background: var(--red);
-    }
-    .crosshair-marker::before { width: 1px; height: 8px; left: 50%; top: -8px; transform: translateX(-50%); }
-    .crosshair-marker::after  { height: 1px; width: 8px; top: 50%; left: -8px; transform: translateY(-50%); }
   </style>
 </head>
 <body>
 <div class="page-layout">
   <div class="top-bar" id="topBar"></div>
-
   <div class="phase-content">
     <div class="step-progress" id="stepProgress"></div>
 
-    <!-- ═══ STEP 1: Satellite cable map — find damage zone ═══ -->
+    <!-- ══════════════════════════════════════════════════════════
+         STEP 1 — ASCII Coastal Recognition
+         ══════════════════════════════════════════════════════════ -->
     <div class="step-section active" id="step1">
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 1/4</div>
-        <div class="phase-title">Cable Route — Damage Localisation</div>
-        <div class="phase-desc">The satellite mapping system has overlaid the cable route with signal loss data. From the OTDR analysis (fault at 578 km), identify the correct grid sector where the damage is located.</div>
+        <div class="phase-title">Coastal Signature — Zone Identification</div>
+        <div class="phase-desc">
+          An OSINT intercept has captured this ASCII rendering of the coastline near the incident zone. 
+          Using topographic clues, landmark notations, and the shape of the coastline, identify the <strong>sea basin</strong> where the cable cut occurred.
+          <br><br>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.72rem">
+            ⚠ ANALYST NOTE: Several regions have similar coastal signatures. Cross-reference all clues carefully.
+          </span>
+        </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-tag">SAT-MAP-02</span>
-          <span class="panel-title">TAT-14 Cable Route — North Atlantic — Segment 48</span>
+          <span class="panel-tag">SIGINT-ASCII-REF</span>
+          <span class="panel-title">Coastal Topology — Sector Unknown · Classification: SECRET</span>
         </div>
-        <div class="map-container">
-          <svg class="map-svg" viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
-            <!-- Ocean background -->
-            <rect width="760" height="380" fill="#030a14"/>
+        <div class="ascii-map" id="asciiMap">
+<pre>
+  GRID REF: [CLASSIFIED]          NORTH ↑                    SCALE 1:2,400,000
+  ═══════════════════════════════════════════════════════════════════════════════
 
-            <!-- Grid -->
-            <line x1="0"   y1="95"  x2="760" y2="95"  class="grid-line"/>
-            <line x1="0"   y1="190" x2="760" y2="190" class="grid-line"/>
-            <line x1="0"   y1="285" x2="760" y2="285" class="grid-line"/>
-            <line x1="190" y1="0"   x2="190" y2="380" class="grid-line"/>
-            <line x1="380" y1="0"   x2="380" y2="380" class="grid-line"/>
-            <line x1="570" y1="0"   x2="570" y2="380" class="grid-line"/>
+       A         B         C         D         E         F         G
+  10  ░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░▓▓▓<span class="hlight">[SWE]</span>▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓<span class="hlight">[FIN]</span>▓▓
+  09  ░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░░▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓
+  08  ░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  07  ░░░░░░░░░░░░░░░░░░░▓▓▓░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░░░▓▓░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  06  ░░░░░░░░░░░░░░░░░░░▓░░░░░░░░░░░░░░░░░▓▓▓▓▓▓<span class="hlight">[EST]</span>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  05  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓<span class="hlight">[LAT]</span>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  04  ░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓<span class="hlight">[LIT]</span>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  03  ░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ░░░░░░░░░░░▓▓▓▓▓▓▓<span class="hlight">[POL]</span>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓<span class="hlight">[BLR excl.]</span>▓▓▓▓▓▓▓▓▓
+  02  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  01  ▓▓▓▓▓▓<span class="hlight">[GER]</span>▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-            <!-- Grid labels -->
-            <text x="95"  y="12" class="coord-label" text-anchor="middle">A</text>
-            <text x="285" y="12" class="coord-label" text-anchor="middle">B</text>
-            <text x="475" y="12" class="coord-label" text-anchor="middle">C</text>
-            <text x="665" y="12" class="coord-label" text-anchor="middle">D</text>
-            <text x="12" y="50"  class="coord-label" text-anchor="middle">1</text>
-            <text x="12" y="143" class="coord-label" text-anchor="middle">2</text>
-            <text x="12" y="238" class="coord-label" text-anchor="middle">3</text>
-            <text x="12" y="333" class="coord-label" text-anchor="middle">4</text>
-
-            <!-- Latitude/Long labels -->
-            <text x="95"  y="378" class="coord-label" text-anchor="middle">50°W</text>
-            <text x="285" y="378" class="coord-label" text-anchor="middle">40°W</text>
-            <text x="475" y="378" class="coord-label" text-anchor="middle">30°W</text>
-            <text x="665" y="378" class="coord-label" text-anchor="middle">20°W</text>
-            <text x="750" y="50"  class="coord-label">52°N</text>
-            <text x="750" y="143" class="coord-label">48°N</text>
-            <text x="750" y="238" class="coord-label">44°N</text>
-            <text x="750" y="333" class="coord-label">40°N</text>
-
-            <!-- Landmasses (simplified) -->
-            <path d="M0,0 L60,0 L70,40 L50,80 L30,100 L0,110 Z" fill="#1a2535" opacity="0.8"/>
-            <path d="M720,0 L760,0 L760,200 L740,180 L730,140 L740,80 L720,40 Z" fill="#1a2535" opacity="0.8"/>
-            <text x="25" y="55" fill="#6b7a8d" font-family="'Share Tech Mono',monospace" font-size="8">NORTH</text>
-            <text x="15" y="65" fill="#6b7a8d" font-family="'Share Tech Mono',monospace" font-size="8">AMERICA</text>
-            <text x="728" y="80" fill="#6b7a8d" font-family="'Share Tech Mono',monospace" font-size="8">EU</text>
-
-            <!-- Cable route: total ~1200km, from ~80,260 to ~700,80 -->
-            <!-- Normal segments: 0-400km (x=80 to ~350) -->
-            <path d="M80,260 Q200,220 350,170" class="cable-segment"/>
-            <!-- Normal: 400-500km -->
-            <path d="M350,170 Q410,155 440,148" class="cable-segment"/>
-            <!-- Fault zone 500-620km — sector C2 -->
-            <path d="M440,148 Q490,138 530,128" class="cable-damaged"/>
-            <!-- After fault (dead) -->
-            <path d="M530,128 Q620,105 700,80" stroke="rgba(255,74,74,0.3)" stroke-width="1.5" fill="none" stroke-dasharray="3,5"/>
-
-            <!-- Km markers -->
-            <circle cx="80"  cy="260" r="4" fill="#4a9eff" opacity="0.6"/>
-            <text x="85" y="274" fill="#4a9eff" font-family="'Share Tech Mono',monospace" font-size="8">0 km</text>
-            <circle cx="215" cy="218" r="3" fill="#4a9eff" opacity="0.4"/>
-            <text x="220" y="228" fill="#6b7a8d" font-family="'Share Tech Mono',monospace" font-size="8">200 km</text>
-            <circle cx="350" cy="170" r="3" fill="#4a9eff" opacity="0.4"/>
-            <text x="355" y="180" fill="#6b7a8d" font-family="'Share Tech Mono',monospace" font-size="8">400 km</text>
-
-            <!-- Fault zone highlight -->
-            <rect x="430" y="100" width="120" height="75" fill="rgba(255,74,74,0.07)" stroke="rgba(255,74,74,0.25)" stroke-width="1" stroke-dasharray="5,3"/>
-            <text x="438" y="116" fill="rgba(255,74,74,0.6)" font-family="'Share Tech Mono',monospace" font-size="8">SIGNAL LOSS ZONE</text>
-            <text x="438" y="127" fill="rgba(255,74,74,0.6)" font-family="'Share Tech Mono',monospace" font-size="8">~500-620 km</text>
-
-            <!-- Fault star marker -->
-            <circle cx="488" cy="140" r="6" fill="none" stroke="#ff4a4a" stroke-width="2"/>
-            <text x="484" y="144" fill="#ff4a4a" font-family="'Share Tech Mono',monospace" font-size="9">✕</text>
-
-            <!-- Sector labels -->
-            <text x="95"  y="50"  fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">A1</text>
-            <text x="285" y="50"  fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">B1</text>
-            <text x="475" y="50"  fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">C1</text>
-            <text x="665" y="50"  fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">D1</text>
-            <text x="95"  y="145" fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">A2</text>
-            <text x="285" y="145" fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">B2</text>
-            <text x="475" y="145" fill="rgba(107,122,141,0.6)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700" fill-opacity="0.8">C2</text>
-            <text x="665" y="145" fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">D2</text>
-            <text x="95"  y="240" fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">A3</text>
-            <text x="285" y="240" fill="rgba(107,122,141,0.3)" font-family="'Barlow Condensed',sans-serif" font-size="28" font-weight="700">B3</text>
-          </svg>
+       ░ = Water  ▓ = Land/Coast    DEPTH CONTOURS: ─ 20m  ══ 50m  ≡ 100m
+       NOTE: Gotland Island visible at C8. Bornholm Island at B03.
+             Kaliningrad exclave bordered at C03/D03.
+             Depth max ~459m. Enclosed sea. Brackish water (7-8 ppt salinity).
+</pre>
         </div>
       </div>
 
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-tag">GEO-CLUES</span>
+          <span class="panel-title">Available Intelligence Fragments</span>
+        </div>
+        <div style="padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:0.4rem">HYDROGRAPHY</div>
+            <div style="font-size:0.8rem">Max depth ~459m · Brackish (low salinity) · Semi-enclosed · No tidal influence</div>
+          </div>
+          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:0.4rem">COASTAL STATES</div>
+            <div style="font-size:0.8rem">9 nations including Germany, Poland, Lithuania, Latvia, Estonia, Sweden, Finland, Russia (Kaliningrad)</div>
+          </div>
+          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:0.4rem">STRATEGIC ISLANDS</div>
+            <div style="font-size:0.8rem">Gotland (SWE) — NATO early warning · Bornholm (DEN) — submarine choke point · Åland (FIN)</div>
+          </div>
+          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--muted);margin-bottom:0.4rem">MISLEADING INTEL</div>
+            <div style="font-size:0.8rem;color:var(--yellow)">⚠ SIGINT noise: some intercepts reference "North Sea routing" — assess as disinformation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intercepted enemy note (decoy/RP element) -->
+      <div class="enemy-note">
+        <span style="color:rgba(255,100,100,0.8)">[INTERCEPTED · ENCRYPTED · PARTIAL DECRYPT]</span><br>
+        "...операция прошла успешно в <span style="color:var(--yellow)">БАЛТИЙСКОМ</span> секторе... кабели перерезаны на глубине 80м...
+        груз доставлен через порт <span style="color:var(--red)">Калининград</span>... следующий этап — Северное море [ЗАШИФРОВАНО]..."<br>
+        <span style="color:var(--muted);font-size:0.58rem">[AUTO-TRANSLATE: "...operation successful in [BALTIC] sector... cables severed at 80m depth... cargo dispatched via port Kaliningrad... next phase — North Sea [ENCRYPTED]..."]</span>
+      </div>
+
       <div class="enigma-block" id="e1block">
-        <div class="enigma-q">The OTDR fault at <strong class="accent">578 km</strong> corresponds to the signal loss zone visible on the cable map. In which grid sector is the cable damage located?</div>
-        <div class="enigma-hint">// Cross-reference the km markers on the cable route with the grid coordinates</div>
+        <div class="enigma-q">Based on the ASCII coastal signature and all available intelligence, identify the sea basin where the cable sabotage occurred. Enter the correct name.</div>
+        <div class="enigma-hint">// Clues: brackish semi-enclosed sea, 9 coastal states, Gotland island visible, max depth ~459m, Kaliningrad reference</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.75rem">
+          Candidates: <span style="color:var(--text)">North Sea · Baltic Sea · Norwegian Sea · Barents Sea · Black Sea · Caspian Sea</span>
+        </div>
         <div class="flex gap1 mt2">
-          <input class="mono-input" id="e1input" placeholder="e.g. A1" style="max-width:120px; text-transform:uppercase" autocomplete="off">
+          <input class="mono-input" id="e1input" placeholder="Enter sea name..." style="max-width:280px" autocomplete="off">
           <button class="btn btn-primary" onclick="checkE1()">VERIFY</button>
         </div>
         <div class="feedback" id="e1fb"></div>
       </div>
     </div>
 
-    <!-- ═══ STEP 2: Ship route anomalies ═══ -->
+    <!-- ══════════════════════════════════════════════════════════
+         STEP 2 — AIS Traffic Analysis: Find missing vessels
+         ══════════════════════════════════════════════════════════ -->
     <div class="step-section" id="step2">
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 2/4</div>
-        <div class="phase-title">AIS Vessel Tracking — Anomaly Detection</div>
-        <div class="phase-desc">AIS (Automatic Identification System) data has been pulled for all vessels in the cable damage zone in the ±6h window around the incident. Identify which vessel showed anomalous behaviour.</div>
+        <div class="phase-title">AIS Traffic Analysis — Signal Loss Events</div>
+        <div class="phase-desc">
+          The AIS network covering the Baltic has recorded <strong>58 vessels</strong> in the incident window (2024-01-11 18:00Z → 2024-01-12 06:00Z).
+          The damage zone is centred at <strong>57.3°N / 20.8°E</strong> (east of Gotland).
+          Identify all vessels that went AIS-dark (signal loss) within <strong>15 nautical miles</strong> of that coordinate during the window.
+          <br><br>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.72rem">
+            ⚠ NOTE: Some vessels have intermittent signal gaps due to legitimate technical issues. Cross-reference speed, heading and last known position carefully.
+          </span>
+        </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-tag">AIS DATA</span>
-          <span class="panel-title">Zone C2 — 48°N / 30°W — Window 22:00–06:00 UTC</span>
+          <span class="panel-tag">AIS-ARCHIVE</span>
+          <span class="panel-title">Vessel Traffic Service — Baltic Sea · 2024-01-11 18:00Z to 2024-01-12 06:00Z</span>
         </div>
-
         <div style="overflow-x:auto">
-          <div class="vessel-row header">
-            <span>MMSI</span><span>VESSEL NAME</span><span>TYPE</span><span>SPEED (kn)</span><span>HEADING</span><span>AIS STATUS</span>
-          </div>
-          <div class="vessel-row">
-            <span class="imo">338734100</span><span>MV ATLANTIC STAR</span><span class="muted small">Container</span>
-            <span>18.2 kn</span><span class="muted">270° (W)</span><span style="color:var(--green);font-size:0.65rem;font-family:'Share Tech Mono',monospace">NORMAL</span>
-          </div>
-          <div class="vessel-row">
-            <span class="imo">209112000</span><span>MT HIBERNIA</span><span class="muted small">Tanker</span>
-            <span>13.8 kn</span><span class="muted">265° (W)</span><span style="color:var(--green);font-size:0.65rem;font-family:'Share Tech Mono',monospace">NORMAL</span>
-          </div>
-          <div class="vessel-row">
-            <span class="imo">477213600</span><span>FV NINGBO 7</span><span class="muted small">Fishing</span>
-            <span>3.1 kn</span><span class="muted">varies</span><span style="color:var(--green);font-size:0.65rem;font-family:'Share Tech Mono',monospace">NORMAL</span>
-          </div>
-          <div class="vessel-row suspect">
-            <span class="imo" style="color:var(--red)">273410820</span><span style="color:var(--yellow)">MV ORLAN VOSTOK</span><span class="muted small">Cargo</span>
-            <span style="color:var(--yellow)">0.4 kn</span><span style="color:var(--red)">AIS OFF 04:08–04:22</span>
-            <span style="color:var(--red);font-size:0.65rem;font-family:'Share Tech Mono',monospace">⚠ ANOMALY</span>
-          </div>
-          <div class="vessel-row">
-            <span class="imo">235073580</span><span>MV CELTIC HARMONY</span><span class="muted small">RoRo</span>
-            <span>16.5 kn</span><span class="muted">090° (E)</span><span style="color:var(--green);font-size:0.65rem;font-family:'Share Tech Mono',monospace">NORMAL</span>
-          </div>
-          <div class="vessel-row">
-            <span class="imo">566823000</span><span>CG VESSEL 441</span><span class="muted small">Gov/Coast Guard</span>
-            <span>12.0 kn</span><span class="muted">180° (S)</span><span style="color:var(--green);font-size:0.65rem;font-family:'Share Tech Mono',monospace">NORMAL</span>
-          </div>
+          <table class="ais-table">
+            <thead>
+              <tr>
+                <th>MMSI</th><th>VESSEL NAME</th><th>FLAG</th><th>TYPE</th>
+                <th>LAST POS</th><th>SPEED kts</th><th>HEADING</th>
+                <th>AIS STATUS</th><th>DIST TO ZONE</th><th>NOTE</th>
+              </tr>
+            </thead>
+            <tbody id="aisTableBody"></tbody>
+          </table>
         </div>
-
-        <div class="mt2 enigma-hint" style="display:block">
-          // AIS anomaly flags: transponder disabled for 14 minutes during the exact fault window | Speed: 0.4 kn = near-stationary at cable crossing coordinates
+        <div style="padding:0.5rem 0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);border-top:1px solid var(--border)">
+          Showing 58 of 58 vessels · AIS-DARK = signal lost during window · INTERMITTENT = periodic dropouts · NOMINAL = continuous tracking
         </div>
       </div>
 
       <div class="enigma-block" id="e2block">
-        <div class="enigma-q">Which vessel's MMSI number corresponds to the anomalous contact — one that disabled its AIS transponder during the fault window and was near-stationary over the cable route?</div>
-        <div class="enigma-hint">// Enter the 9-digit MMSI number of the suspect vessel</div>
-        <div class="flex gap1 mt2">
-          <input class="mono-input" id="e2input" placeholder="MMSI number" style="max-width:200px" autocomplete="off">
-          <button class="btn btn-primary" onclick="checkE2()">VERIFY</button>
+        <div class="enigma-q">
+          How many vessels went completely AIS-dark (status: AIS-DARK) within 15 NM of 57.3°N/20.8°E during the incident window?<br>
+          <span style="font-size:0.78rem;color:var(--muted)">Then enter the MMSI of the vessel that was both AIS-dark AND had a speed-over-ground of exactly 0.0 knots at last fix.</span>
+        </div>
+        <div class="enigma-hint">// Filter column "AIS STATUS" = AIS-DARK and "DIST TO ZONE" ≤ 15 NM. Then match SOG 0.0 among those.</div>
+        <div class="flex gap1 mt2" style="flex-wrap:wrap">
+          <div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.25rem">NUMBER OF AIS-DARK VESSELS:</div>
+            <input class="mono-input" id="e2a" placeholder="e.g. 3" style="max-width:80px" autocomplete="off">
+          </div>
+          <div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.25rem">MMSI OF STATIONARY DARK VESSEL:</div>
+            <input class="mono-input" id="e2b" placeholder="9-digit MMSI" style="max-width:160px" autocomplete="off">
+          </div>
+          <button class="btn btn-primary" onclick="checkE2()" style="align-self:flex-end">VERIFY</button>
         </div>
         <div class="feedback" id="e2fb"></div>
       </div>
     </div>
 
-    <!-- ═══ STEP 3: Satellite imagery — identify boat ═══ -->
+    <!-- ══════════════════════════════════════════════════════════
+         STEP 3 — Cable map crossref: closest vessel to cables
+         ══════════════════════════════════════════════════════════ -->
     <div class="step-section" id="step3">
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 3/4</div>
-        <div class="phase-title">Satellite Imagery Analysis</div>
-        <div class="phase-desc">A Copernicus SAR satellite pass captured imagery of zone C2 at 04:19 UTC. Three vessels are visible. Based on the AIS data and visual characteristics, identify which vessel matches the suspect contact.</div>
+        <div class="phase-title">Cable Infrastructure Overlay — Proximity Analysis</div>
+        <div class="phase-desc">
+          Overlay the AIS-dark vessel positions against the subsea cable network map. Three cables cross the incident zone.
+          Determine which of the AIS-dark vessels was closest to <strong>cable SEA-ME-WE-BALT-3</strong> at the moment of signal loss, and identify the <strong>grid sector</strong> where the cable damage is most likely located.
+        </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-tag">SAR-IMG-0419Z</span>
-          <span class="panel-title">Sentinel-1 Synthetic Aperture Radar — Zone C2 — 04:19 UTC</span>
+          <span class="panel-tag">INFRA-MAP-03</span>
+          <span class="panel-title">Subsea Cable Network — Baltic Sea · Incident Zone Overlay</span>
         </div>
+        <div class="cable-map">
+          <svg class="cable-svg" viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sea background -->
+            <rect width="800" height="520" class="sea-fill"/>
 
-        <div class="sat-canvas" id="satCanvas">
-          <!-- Simulated SAR image with vessels -->
-          <svg width="100%" height="100%" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
-            <!-- Sea texture -->
-            <filter id="noise">
-              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
-              <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
-              <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply"/>
-            </filter>
-            <rect width="700" height="240" fill="#040d1c"/>
-            <rect width="700" height="240" fill="#071525" filter="url(#noise)" opacity="0.8"/>
+            <!-- Grid -->
+            <line x1="0" y1="130" x2="800" y2="130" class="grid-ln"/>
+            <line x1="0" y1="260" x2="800" y2="260" class="grid-ln"/>
+            <line x1="0" y1="390" x2="800" y2="390" class="grid-ln"/>
+            <line x1="200" y1="0"  x2="200" y2="520" class="grid-ln"/>
+            <line x1="400" y1="0"  x2="400" y2="520" class="grid-ln"/>
+            <line x1="600" y1="0"  x2="600" y2="520" class="grid-ln"/>
 
-            <!-- Sea clutter (typical SAR sea return) -->
-            <rect x="0" y="0" width="700" height="240" fill="url(#seaPattern)" opacity="0.3"/>
-            <defs>
-              <pattern id="seaPattern" width="8" height="8" patternUnits="userSpaceOnUse">
-                <rect width="8" height="8" fill="none"/>
-                <circle cx="2" cy="2" r="0.5" fill="rgba(74,120,180,0.4)"/>
-                <circle cx="6" cy="6" r="0.4" fill="rgba(74,120,180,0.3)"/>
-              </pattern>
-            </defs>
+            <!-- Column / Row labels -->
+            <text x="100" y="14" class="coord-lbl" text-anchor="middle">A · 18-19°E</text>
+            <text x="300" y="14" class="coord-lbl" text-anchor="middle">B · 19-20°E</text>
+            <text x="500" y="14" class="coord-lbl" text-anchor="middle">C · 20-21°E</text>
+            <text x="700" y="14" class="coord-lbl" text-anchor="middle">D · 21-22°E</text>
+            <text x="6"   y="70"  class="coord-lbl">1·59°N</text>
+            <text x="6"   y="200" class="coord-lbl">2·58°N</text>
+            <text x="6"   y="330" class="coord-lbl">3·57°N</text>
+            <text x="6"   y="460" class="coord-lbl">4·56°N</text>
 
-            <!-- Cable location indicator -->
-            <line x1="0" y1="155" x2="700" y2="120" stroke="rgba(74,158,255,0.1)" stroke-width="1" stroke-dasharray="8,8"/>
-            <text x="5" y="112" fill="rgba(74,158,255,0.3)" font-family="'Share Tech Mono',monospace" font-size="8">TAT-14 CABLE ROUTE</text>
+            <!-- Gotland island (roughly center) -->
+            <ellipse cx="480" cy="200" rx="55" ry="90" class="land-fill"/>
+            <text x="480" y="198" class="cable-lbl" text-anchor="middle" fill="rgba(180,220,180,0.7)">GOTLAND</text>
+            <text x="480" y="210" class="cable-lbl" text-anchor="middle" fill="rgba(180,220,180,0.5)">(SWE)</text>
 
-            <!-- Vessel A — large container ship, moving fast (normal) -->
-            <g transform="translate(120,80) rotate(-15)">
-              <rect x="-30" y="-6" width="60" height="12" fill="rgba(200,220,255,0.85)" rx="2"/>
-              <rect x="15" y="-4" width="18" height="8" fill="rgba(220,230,255,0.6)"/>
-            </g>
-            <text x="90" y="70" fill="rgba(74,158,255,0.7)" font-family="'Share Tech Mono',monospace" font-size="8">A — ATLANTIC STAR</text>
-            <text x="90" y="80" fill="rgba(107,122,141,0.6)" font-family="'Share Tech Mono',monospace" font-size="7">Speed: 18 kn | AIS: ON</text>
-            <text x="90" y="90" fill="rgba(107,122,141,0.6)" font-family="'Share Tech Mono',monospace" font-size="7">Heading: 270° W</text>
+            <!-- Öland island -->
+            <ellipse cx="310" cy="390" rx="18" ry="45" class="land-fill"/>
+            <text x="310" y="395" class="cable-lbl" text-anchor="middle" fill="rgba(180,220,180,0.5)">Öland</text>
 
-            <!-- Vessel B — small fishing vessel (normal) -->
-            <g transform="translate(500,185) rotate(10)">
-              <rect x="-10" y="-3" width="22" height="7" fill="rgba(180,200,240,0.75)" rx="1"/>
-            </g>
-            <text x="520" y="185" fill="rgba(74,158,255,0.7)" font-family="'Share Tech Mono',monospace" font-size="8">C — NINGBO 7</text>
-            <text x="520" y="195" fill="rgba(107,122,141,0.6)" font-family="'Share Tech Mono',monospace" font-size="7">Speed: 3 kn | AIS: ON</text>
+            <!-- ── CABLES ── -->
+            <!-- Cable 1: ESTLINK-3 (N-S, east side) -->
+            <path d="M710,20 C700,80 680,160 660,240 C640,320 620,400 600,500" class="cable-ok" stroke="#2a7acc"/>
+            <text x="720" y="130" class="cable-lbl" fill="#2a7acc">ESTLINK-3</text>
 
-            <!-- Vessel C — suspect cargo, near stationary over cable — brighter SAR return from anchor chain -->
-            <g transform="translate(340,138) rotate(5)">
-              <rect x="-25" y="-5" width="50" height="10" fill="rgba(255,240,200,0.95)" rx="1"/>
-              <rect x="-25" y="-5" width="8" height="10" fill="rgba(255,255,255,0.9)"/>
-            </g>
-            <!-- Bright wake smear — shows it was dragging something -->
-            <path d="M315,142 Q290,148 260,158" stroke="rgba(255,220,100,0.25)" stroke-width="3" fill="none"/>
+            <!-- Cable 2: BALT-SEA-1 (diagonal W-E) -->
+            <path d="M50,480 C150,430 250,380 350,310 C420,260 500,210 560,160 C610,120 660,80 720,40" class="cable-ok" stroke="#3a8a5a"/>
+            <text x="160" y="430" class="cable-lbl" fill="#3a8a5a">BALT-SEA-1</text>
 
-            <!-- Red annotation box on suspect -->
-            <rect x="290" y="115" width="120" height="55" fill="none" stroke="#ff4a4a" stroke-width="1.5" stroke-dasharray="4,3"/>
-            <text x="295" y="128" fill="#ff4a4a" font-family="'Share Tech Mono',monospace" font-size="8">B — ORLAN VOSTOK</text>
-            <text x="295" y="139" fill="rgba(245,197,66,0.9)" font-family="'Share Tech Mono',monospace" font-size="7">⚠ Near stationary</text>
-            <text x="295" y="150" fill="rgba(245,197,66,0.9)" font-family="'Share Tech Mono',monospace" font-size="7">⚠ AIS dark 04:08-22</text>
-            <text x="295" y="161" fill="rgba(245,197,66,0.9)" font-family="'Share Tech Mono',monospace" font-size="7">⚠ Drag wake detected</text>
+            <!-- Cable 3: SEA-ME-WE-BALT-3 — THIS IS THE DAMAGED ONE -->
+            <path d="M30,300 C100,290 180,285 260,280 C320,276 370,274 420,272 C450,271 465,270 490,270" class="cable-ok" stroke="#5a7aaa"/>
+            <path d="M490,270 C510,270 530,272 560,285 C590,300 620,330 660,360 C690,385 730,400 780,410" class="cable-dmg"/>
+            <text x="100" y="268" class="cable-lbl" fill="#5a7aaa">SEA-ME-WE-BALT-3</text>
+            <text x="590" y="350" class="cable-lbl" fill="var(--red)">SIGNAL LOSS →</text>
+
+            <!-- Damage zone circle -->
+            <circle cx="550" cy="278" r="35" class="zone-circle"/>
+            <text x="550" y="328" class="cable-lbl" text-anchor="middle" fill="var(--red)">FAULT ZONE</text>
+
+            <!-- ── VESSEL POSITIONS (AIS-dark ones) ── -->
+            <!-- Vessel A: MV NORDVIK (misleading — too far) -->
+            <circle cx="150" cy="310" r="6" fill="rgba(245,197,66,0.5)" stroke="#f5c542" stroke-width="1.5"/>
+            <text x="162" y="308" class="cable-lbl" fill="#f5c542">NORDVIK [DARK] 12.5NM</text>
+            <line x1="150" y1="316" x2="150" y2="400" class="ship-track s-warn"/>
+
+            <!-- Vessel B: MV GREIFSWALD (misleading) -->
+            <circle cx="290" cy="370" r="6" fill="rgba(245,197,66,0.4)" stroke="#f5c542" stroke-width="1.5"/>
+            <text x="302" y="368" class="cable-lbl" fill="#f5c542">GREIFSWALD [DARK] 9.2NM</text>
+            <line x1="290" y1="376" x2="310" y2="450" class="ship-track s-warn"/>
+
+            <!-- Vessel C: KNYAZ VLADIMIR — THE REAL ONE, closest to cable -->
+            <circle cx="545" cy="282" r="8" fill="rgba(255,74,74,0.4)" stroke="var(--red)" stroke-width="2"/>
+            <text x="560" y="270" class="cable-lbl" fill="var(--red)" font-weight="bold">KNYAZ VLADIMIR [DARK]</text>
+            <text x="560" y="280" class="cable-lbl" fill="var(--red)">SOG 0.0kt · 1.8NM from cable</text>
+            <!-- track going to fault zone -->
+            <path d="M545,282 C548,278 550,275 550,273" class="ship-track s-dark"/>
+
+            <!-- Grid sector label C2 -->
+            <text x="500" y="250" class="coord-lbl" fill="rgba(74,158,255,0.3)" font-size="20" opacity="0.4">C2</text>
 
             <!-- Scale bar -->
-            <line x1="600" y1="225" x2="680" y2="225" stroke="rgba(107,122,141,0.5)" stroke-width="1"/>
-            <text x="622" y="222" fill="rgba(107,122,141,0.6)" font-family="'Share Tech Mono',monospace" font-size="7">10 km</text>
+            <line x1="20" y1="505" x2="120" y2="505" stroke="rgba(74,158,255,0.4)" stroke-width="1.5"/>
+            <text x="20"  y="516" class="coord-lbl">0</text>
+            <text x="115" y="516" class="coord-lbl">50NM</text>
+            <line x1="20" y1="500" x2="20" y2="510" stroke="rgba(74,158,255,0.4)" stroke-width="1.5"/>
+            <line x1="120" y1="500" x2="120" y2="510" stroke="rgba(74,158,255,0.4)" stroke-width="1.5"/>
 
-            <!-- Compass -->
-            <text x="650" y="30" fill="rgba(107,122,141,0.5)" font-family="'Share Tech Mono',monospace" font-size="8">N↑</text>
+            <!-- Legend -->
+            <line x1="610" y1="465" x2="640" y2="465" stroke="#2a7acc" stroke-width="2"/>
+            <text x="645" y="469" class="cable-lbl" fill="#2a7acc">ESTLINK-3</text>
+            <line x1="610" y1="479" x2="640" y2="479" stroke="#3a8a5a" stroke-width="2"/>
+            <text x="645" y="483" class="cable-lbl" fill="#3a8a5a">BALT-SEA-1</text>
+            <line x1="610" y1="493" x2="640" y2="493" stroke="#5a7aaa" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="645" y="497" class="cable-lbl" fill="#5a7aaa">SEA-ME-WE-BALT-3 ⚠</text>
           </svg>
-        </div>
-
-        <div class="mt2" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;font-size:0.75rem">
-          <div><div class="label">Satellite Pass</div><div class="mono small">04:19:42 UTC</div></div>
-          <div><div class="label">Resolution</div><div class="mono small">10 m/pixel (IW mode)</div></div>
-          <div><div class="label">Wake analysis</div><div class="mono small accent">Drag signature detected</div></div>
         </div>
       </div>
 
+      <!-- Another enemy note hidden in the map section -->
+      <div class="enemy-note">
+        <span style="color:rgba(255,100,100,0.8)">[ПЕРЕХВАЧЕННАЯ СВЯЗЬ — ЧАСТИЧНАЯ РАСШИФРОВКА]</span><br>
+        "Кнезь успешно достиг точки С2. Трал сброшен на отметке 57°18'N / 20°49'E.
+        Кабель повреждён. Судно переходит в режим тишины АИС. Следуйте плану Б..."<br>
+        <span style="color:var(--muted);font-size:0.58rem">[AUTO-TRANSLATE: "Knyaz successfully reached point C2. Drag deployed at 57°18'N / 20°49'E. Cable damaged. Vessel switching to AIS silence. Follow Plan B..."]</span>
+      </div>
+
       <div class="enigma-block" id="e3block">
-        <div class="enigma-q">Based on the SAR imagery analysis, which vessel is identified as the suspect? It shows a drag wake signature and was stationary over the cable route while its AIS was dark. Enter its name exactly.</div>
-        <div class="enigma-hint">// Ship name as it appears in the AIS data</div>
-        <div class="flex gap1 mt2">
-          <input class="mono-input" id="e3input" placeholder="VESSEL NAME" style="max-width:260px; text-transform:uppercase" autocomplete="off">
-          <button class="btn btn-primary" onclick="checkE3()">VERIFY</button>
+        <div class="enigma-q">
+          Cross-referencing the cable overlay map, which AIS-dark vessel was closest to cable <em>SEA-ME-WE-BALT-3</em> at time of signal loss?<br>
+          Enter the vessel name AND the grid sector reference (e.g. B3) where the cable fault is located.
+        </div>
+        <div class="enigma-hint">// Look for the vessel annotated directly on the cable route in the fault zone. Check its distance label from the cable.</div>
+        <div class="flex gap1 mt2" style="flex-wrap:wrap">
+          <div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.25rem">VESSEL NAME:</div>
+            <input class="mono-input" id="e3a" placeholder="MV ..." style="max-width:200px" autocomplete="off">
+          </div>
+          <div>
+            <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.25rem">GRID SECTOR:</div>
+            <input class="mono-input" id="e3b" placeholder="e.g. B3" style="max-width:80px" autocomplete="off">
+          </div>
+          <button class="btn btn-primary" onclick="checkE3()" style="align-self:flex-end">VERIFY</button>
         </div>
         <div class="feedback" id="e3fb"></div>
       </div>
     </div>
 
-    <!-- ═══ STEP 4: Origin database lookup ═══ -->
+    <!-- ══════════════════════════════════════════════════════════
+         STEP 4 — Large vessel database: find the ship
+         ══════════════════════════════════════════════════════════ -->
     <div class="step-section" id="step4">
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 4/4</div>
-        <div class="phase-title">Vessel Registry — Origin Identification</div>
-        <div class="phase-desc">Cross-reference the suspect vessel against the IMO vessel registry and intelligence databases to establish its flag state, owner, and last declared port of origin.</div>
+        <div class="phase-title">Vessel Registry — Identity Confirmation</div>
+        <div class="phase-desc">
+          The vessel <strong>KNYAZ VLADIMIR</strong> must be located in the international vessel database to confirm its flag, ownership chain, and last declared port.
+          The database contains <strong>847 vessels</strong>. Use the search filters to locate the entry, then extract the key intelligence fields.
+        </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-tag">IMO REGISTRY</span>
-          <span class="panel-title">Vessel Database Query — MMSI 273410820</span>
+          <span class="panel-tag">IMO-REGISTRY · LLOYD'S · IHS MARKIT</span>
+          <span class="panel-title">Global Vessel Database — 847 records</span>
         </div>
-
-        <div style="overflow-x:auto">
-          <div class="db-row header">
-            <span>FIELD</span><span>VALUE</span><span>SOURCE</span><span>LAST UPDATED</span><span>FLAG</span>
+        <div style="padding:0.75rem">
+          <div class="vdb-search">
+            <input class="mono-input" id="vdbSearch" placeholder="Search by name, MMSI, IMO, flag or type..." style="max-width:400px" oninput="filterVDB(this.value)">
+            <select id="vdbFilter" onchange="filterVDB(document.getElementById('vdbSearch').value)" style="background:#060d18;border:1px solid rgba(74,158,255,0.3);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:0.7rem;padding:0.4rem;outline:none">
+              <option value="">ALL STATUS</option>
+              <option value="SIGNAL LOST">SIGNAL LOST</option>
+              <option value="NOMINAL">NOMINAL</option>
+              <option value="IN PORT">IN PORT</option>
+            </select>
+            <span id="vdbCount" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);align-self:center">847 records</span>
           </div>
-          <div class="db-row">
-            <span class="accent">IMO Number</span><span>9487245</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-12</span><span></span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Vessel Name</span><span>ORLAN VOSTOK</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-12</span><span></span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Type</span><span>General Cargo (1200 DWT)</span><span class="muted">IHS Markit</span><span class="muted">2023-09-04</span><span></span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Flag State</span><span style="color:var(--yellow)">Comoros (KM)</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-12</span><span class="yellow">⚠ FOC</span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Registered Owner</span><span>Seagate Maritime LLC</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-12</span><span></span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Beneficial Owner</span><span style="color:var(--red)">REDACTED — INT INTEL</span><span class="muted">INT-LINK DB</span><span class="muted">2024-01-15</span><span class="red">⚠ CLASSIFIED</span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Last Port</span><span style="color:var(--yellow)">Kaliningrad, Russia (RUGRD)</span><span class="muted">AIS Archive</span><span class="muted">2024-01-09</span><span class="yellow">⚠</span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Destination</span><span>NONE DECLARED</span><span class="muted">AIS</span><span class="muted">2024-01-12</span><span></span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Hull Equipment</span><span style="color:var(--red)">Survey pending — Deep-sea cable ops equipment noted</span><span class="muted">Port state ctrl</span><span class="muted">2023-11-28</span><span class="red">⚠</span>
-          </div>
-          <div class="db-row">
-            <span class="accent">Sanctions check</span><span style="color:var(--orange)">Watchlist match — Seagate Maritime LLC (OFAC SDN)</span><span class="muted">OFAC DB</span><span class="muted">2024-01-14</span><span class="orange">⚠ SDN</span>
+          <div style="overflow:auto;max-height:350px;border:1px solid var(--border)">
+            <table class="vdb-table">
+              <thead>
+                <tr>
+                  <th>MMSI</th><th>IMO</th><th>VESSEL NAME</th><th>FLAG</th>
+                  <th>TYPE</th><th>OWNER</th><th>LAST PORT</th><th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="vdbBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
 
+      <!-- Beneficial owner reveal panel (shown after finding the ship) -->
+      <div class="panel" id="ownerPanel" style="display:none">
+        <div class="panel-header">
+          <span class="panel-tag" style="color:var(--red)">CLASSIFIED · INT-LINK DATABASE</span>
+          <span class="panel-title">Beneficial Ownership Record — KNYAZ VLADIMIR · IMO 9612387</span>
+        </div>
+        <div style="overflow-x:auto">
+          <div class="db-row header">
+            <span>FIELD</span><span>VALUE</span><span>SOURCE</span><span>LAST UPDATED</span><span>FLAG</span>
+          </div>
+          <div class="db-row"><span class="accent">IMO Number</span><span>9612387</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span><span></span></div>
+          <div class="db-row"><span class="accent">Vessel Name</span><span>KNYAZ VLADIMIR</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span><span></span></div>
+          <div class="db-row"><span class="accent">Type</span><span>General Cargo w/ crane (2400 DWT)</span><span class="muted">IHS Markit</span><span class="muted">2023-10-14</span><span></span></div>
+          <div class="db-row"><span class="accent">Flag State</span><span style="color:var(--yellow)">Tanzania (TZ)</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span><span class="yellow">⚠ FOC</span></div>
+          <div class="db-row"><span class="accent">Registered Owner</span><span>Narvik Shipping Partners Ltd</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span><span></span></div>
+          <div class="db-row"><span class="accent">Beneficial Owner</span><span style="color:var(--red)">REDACTED — PENDING INT INTEL CLEARANCE</span><span class="muted">INT-LINK DB</span><span class="muted">2024-01-13</span><span class="red">⚠ CLASSIFIED</span></div>
+          <div class="db-row"><span class="accent">Last Port</span><span style="color:var(--yellow)">Kaliningrad, Russia (RUGRD)</span><span class="muted">AIS Archive</span><span class="muted">2024-01-08</span><span class="yellow">⚠</span></div>
+          <div class="db-row"><span class="accent">Destination</span><span>NONE DECLARED</span><span class="muted">AIS Live</span><span class="muted">2024-01-11</span><span></span></div>
+          <div class="db-row"><span class="accent">Hull Equipment</span><span style="color:var(--red)">Anchor survey pending — heavy-duty drag equipment & cutting gear noted</span><span class="muted">Port state ctrl</span><span class="muted">2023-12-01</span><span class="red">⚠</span></div>
+          <div class="db-row"><span class="accent">Sanctions check</span><span style="color:var(--orange)">Watchlist match — Narvik Shipping Partners (OFAC SDN-adjacent)</span><span class="muted">OFAC DB</span><span class="muted">2024-01-12</span><span class="orange">⚠ SDN</span></div>
+          <div class="db-row"><span class="accent">Previous name</span><span style="color:var(--muted)">ZVEZDNY PUT (2017-2022)</span><span class="muted">Lloyd's archive</span><span class="muted">2022-06-30</span><span></span></div>
+        </div>
+      </div>
+
       <div class="enigma-block" id="e4block">
-        <div class="enigma-q">Based on the vessel registry data, what is the last declared port of departure of the MV ORLAN VOSTOK? (City and country)</div>
-        <div class="enigma-hint">// Check the AIS archive entry for "Last Port"</div>
+        <div class="enigma-q">
+          Locate KNYAZ VLADIMIR in the database. Then answer: what is the vessel's <strong>last declared port of departure</strong>? (City, Country)
+        </div>
+        <div class="enigma-hint">// Search by vessel name. Then expand the INT-LINK record. Look at AIS Archive — "Last Port" field.</div>
         <div class="flex gap1 mt2">
           <input class="mono-input" id="e4input" placeholder="City, Country" style="max-width:300px" autocomplete="off">
           <button class="btn btn-primary" onclick="checkE4()">VERIFY</button>
@@ -438,94 +501,308 @@
       </button>
     </div>
 
-  </div>
-</div>
+  </div><!-- /phase-content -->
+</div><!-- /page-layout -->
 
 <script src="../js/global.js"></script>
 <script>
-  renderTopBar('02', 'LOCATING THE PROBLEM');
-  const steps = ['1 · Cable Map','2 · AIS Tracking','3 · SAR Imagery','4 · Origin DB'];
-  let currentStep = 1;
-  function showStep(n) {
-    document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('step'+n).classList.add('active');
-    document.getElementById('stepProgress').innerHTML = renderSteps(steps, n-1);
-    currentStep = n; window.scrollTo(0,0);
-  }
-  document.getElementById('stepProgress').innerHTML = renderSteps(steps, 0);
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+renderTopBar('02', 'LOCATING THE PROBLEM');
+const steps = ['1 · Coastal ID','2 · AIS Traffic','3 · Cable Crossref','4 · Vessel DB'];
+let currentStep = 1;
 
-  // E1 — grid sector C2
-  document.getElementById('e1input').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
-  function checkE1() {
-    const v = document.getElementById('e1input').value.trim().toUpperCase();
-    const fb = document.getElementById('e1fb');
-    if (v === 'C2') {
-      fb.textContent = '✓ Confirmed — Damage located in sector C2 (48°N / 30°W). Repair vessel coordinates transmitted.';
-      fb.className = 'feedback show ok';
-      document.getElementById('e1input').disabled = true;
-      document.getElementById('e1block').classList.add('success');
-      setTimeout(() => showStep(2), 1000);
-    } else {
-      fb.textContent = '✗ Incorrect — Cross-reference the 578 km marker on the cable route with the grid overlay.';
-      fb.className = 'feedback show err';
+function showStep(n) {
+  document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  document.getElementById('stepProgress').innerHTML = renderSteps(steps, n-1);
+  currentStep = n; window.scrollTo(0,0);
+}
+document.getElementById('stepProgress').innerHTML = renderSteps(steps, 0);
+
+// ══════════════════════════════════════
+// E1 — Baltic Sea
+// ══════════════════════════════════════
+document.getElementById('e1input').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
+function checkE1() {
+  const v = document.getElementById('e1input').value.trim().toLowerCase();
+  const fb = document.getElementById('e1fb');
+  if (v.includes('baltic') || v === 'mer baltique' || v === 'baltique' || v === 'baltiyskoe' || v === 'ostsee') {
+    fb.textContent = '✓ Confirmed — Baltic Sea identified. Coastal signature matches: 9 coastal states, Gotland/Bornholm islands, brackish water, max depth 459m, semi-enclosed basin. Zone locked.';
+    fb.className = 'feedback show ok';
+    document.getElementById('e1input').disabled = true;
+    document.getElementById('e1block').classList.add('success');
+    setTimeout(() => { buildAISTable(); showStep(2); }, 1200);
+  } else if (v.includes('north') || v.includes('nord')) {
+    fb.textContent = '✗ Incorrect — The North Sea is open ocean with tidal influence and no brackish water. The ASCII map shows enclosed sea geography. Re-examine the clues.';
+    fb.className = 'feedback show err';
+  } else if (v.includes('norwegian') || v.includes('norvège') || v.includes('barents')) {
+    fb.textContent = '✗ Incorrect — Arctic/Sub-arctic sea. The coastal signatures show temperate geography and enclosed basin characteristics. Re-examine.';
+    fb.className = 'feedback show err';
+  } else {
+    fb.textContent = '✗ Incorrect — Cross-reference all hydrographic clues: depth, salinity, number of coastal states, island landmarks.';
+    fb.className = 'feedback show err';
+  }
+}
+
+// ══════════════════════════════════════
+// AIS TABLE DATA
+// ══════════════════════════════════════
+const AIS_DATA = [
+  // The real target
+  { mmsi:'273841052', name:'KNYAZ VLADIMIR', flag:'TZ', type:'Cargo', pos:'57°18\'N 20°49\'E', sog:'0.0', hdg:'182', status:'AIS-DARK', dist:'1.8 NM', note:'Stationary over cable route' },
+  // Misleading AIS-dark vessels
+  { mmsi:'230456789', name:'MV NORDVIK',     flag:'FI', type:'Tanker',  pos:'57°22\'N 20°31\'E', sog:'0.2', hdg:'090', status:'AIS-DARK',    dist:'12.5 NM', note:'Crew reported comms failure' },
+  { mmsi:'211834560', name:'MV GREIFSWALD',  flag:'DE', type:'RoRo',    pos:'57°08\'N 20°57\'E', sog:'0.0', hdg:'000', status:'AIS-DARK',    dist:'9.2 NM',  note:'At anchor — engine maintenance' },
+  // Many nominal vessels
+  { mmsi:'276543210', name:'NORDIC CARRIER', flag:'EE', type:'Cargo',   pos:'57°41\'N 20°12\'E', sog:'11.2',hdg:'215', status:'NOMINAL',     dist:'28.4 NM', note:'' },
+  { mmsi:'265834710', name:'GOTEHOLM',       flag:'SE', type:'Tanker',  pos:'58°02\'N 19°48\'E', sog:'9.8', hdg:'180', status:'NOMINAL',     dist:'45.1 NM', note:'' },
+  { mmsi:'257612340', name:'STAVANGER SUN',  flag:'NO', type:'Cargo',   pos:'56°52\'N 21°03\'E', sog:'13.4',hdg:'315', status:'NOMINAL',     dist:'31.2 NM', note:'' },
+  { mmsi:'209341256', name:'NICOSIA TRADER', flag:'CY', type:'Bulk',    pos:'57°30\'N 21°15\'E', sog:'7.6', hdg:'270', status:'NOMINAL',     dist:'19.8 NM', note:'' },
+  { mmsi:'244810293', name:'AMSTERDAM STAR', flag:'NL', type:'Cargo',   pos:'57°15\'N 19°50\'E', sog:'10.1',hdg:'095', status:'NOMINAL',     dist:'37.6 NM', note:'' },
+  { mmsi:'636091234', name:'PACIFIC GLORY',  flag:'LR', type:'Tanker',  pos:'58°11\'N 20°44\'E', sog:'8.3', hdg:'200', status:'NOMINAL',     dist:'51.3 NM', note:'' },
+  { mmsi:'248341205', name:'VALLETTA WAVE',  flag:'MT', type:'Cargo',   pos:'56°44\'N 20°29\'E', sog:'12.0',hdg:'350', status:'NOMINAL',     dist:'38.4 NM', note:'' },
+  // Intermittent — decoys
+  { mmsi:'566412387', name:'SINGAPORE ACE',  flag:'SG', type:'Cargo',   pos:'57°25\'N 21°00\'E', sog:'6.4', hdg:'245', status:'INTERMITTENT',dist:'14.2 NM', note:'GPS antenna fault reported' },
+  { mmsi:'273901234', name:'BALTICA SPIRIT', flag:'RU', type:'Research', pos:'57°19\'N 21°12\'E', sog:'3.1', hdg:'280', status:'INTERMITTENT',dist:'8.7 NM',  note:'Research vessel — scientific equip. interference' },
+  { mmsi:'212834561', name:'ODER PRINCESS',  flag:'DE', type:'Ferry',   pos:'56°55\'N 20°38\'E', sog:'18.2',hdg:'022', status:'NOMINAL',     dist:'26.5 NM', note:'' },
+  { mmsi:'271983456', name:'TRABZON STAR',   flag:'TR', type:'Bulk',    pos:'57°48\'N 20°52\'E', sog:'9.0', hdg:'185', status:'NOMINAL',     dist:'33.8 NM', note:'' },
+  { mmsi:'232451987', name:'CLYDE FORTRESS', flag:'GB', type:'Cargo',   pos:'57°04\'N 21°08\'E', sog:'11.5',hdg:'310', status:'NOMINAL',     dist:'22.1 NM', note:'' },
+  { mmsi:'246387120', name:'ROTTERDAM WIND', flag:'NL', type:'Tanker',  pos:'58°24\'N 19°55\'E', sog:'7.8', hdg:'170', status:'NOMINAL',     dist:'67.3 NM', note:'' },
+  { mmsi:'205671340', name:'ANTWERP EAGLE',  flag:'BE', type:'Cargo',   pos:'57°38\'N 21°34\'E', sog:'10.3',hdg:'255', status:'NOMINAL',     dist:'41.9 NM', note:'' },
+  { mmsi:'351234876', name:'CRISTOBAL PASS', flag:'PA', type:'Bulk',    pos:'56°38\'N 20°11\'E', sog:'8.9', hdg:'045', status:'NOMINAL',     dist:'49.7 NM', note:'' },
+  { mmsi:'255841230', name:'LISBON QUEEN',   flag:'PT', type:'Cargo',   pos:'58°00\'N 21°02\'E', sog:'12.6',hdg:'220', status:'NOMINAL',     dist:'44.2 NM', note:'' },
+  { mmsi:'277341098', name:'VISTULA DAWN',   flag:'PL', type:'Cargo',   pos:'57°00\'N 20°01\'E', sog:'9.4', hdg:'095', status:'NOMINAL',     dist:'36.6 NM', note:'' },
+  // More filler vessels...
+  { mmsi:'276120987', name:'TALLINK STAR',   flag:'EE', type:'Ferry',   pos:'59°28\'N 24°42\'E', sog:'21.0',hdg:'300', status:'NOMINAL',     dist:'189 NM',  note:'Tallinn–Helsinki route' },
+  { mmsi:'265432198', name:'BIRKA PRINCESS', flag:'SE', type:'Ferry',   pos:'59°10\'N 20°14\'E', sog:'19.3',hdg:'045', status:'NOMINAL',     dist:'105 NM',  note:'' },
+  { mmsi:'230871234', name:'FINNLADY',       flag:'FI', type:'Ferry',   pos:'60°05\'N 22°16\'E', sog:'22.1',hdg:'250', status:'NOMINAL',     dist:'167 NM',  note:'' },
+  { mmsi:'266783456', name:'STENA LINE HSS', flag:'SE', type:'Ferry',   pos:'56°10\'N 15°38\'E', sog:'16.0',hdg:'080', status:'NOMINAL',     dist:'142 NM',  note:'' },
+  { mmsi:'259834512', name:'MF BERGENSFJORD',flag:'NO', type:'Cargo',   pos:'58°44\'N 17°28\'E', sog:'10.8',hdg:'130', status:'NOMINAL',     dist:'98.4 NM', note:'' },
+  { mmsi:'273512098', name:'VOLGA TRANSIT',  flag:'RU', type:'Tanker',  pos:'57°55\'N 22°10\'E', sog:'6.2', hdg:'270', status:'NOMINAL',     dist:'72.3 NM', note:'' },
+  { mmsi:'273098741', name:'LADOGA CARRIER', flag:'RU', type:'Cargo',   pos:'57°42\'N 22°48\'E', sog:'8.5', hdg:'280', status:'NOMINAL',     dist:'88.1 NM', note:'' },
+  { mmsi:'645321089', name:'MOMBASA QUEEN',  flag:'KE', type:'Bulk',    pos:'56°24\'N 19°14\'E', sog:'11.1',hdg:'060', status:'NOMINAL',     dist:'74.8 NM', note:'' },
+  { mmsi:'566012345', name:'OCEAN PIONEER',  flag:'SG', type:'Tanker',  pos:'58°32\'N 21°56\'E', sog:'9.7', hdg:'215', status:'NOMINAL',     dist:'82.0 NM', note:'' },
+  { mmsi:'209512874', name:'EURO SPRINTER',  flag:'CY', type:'Cargo',   pos:'56°48\'N 21°31\'E', sog:'13.8',hdg:'340', status:'NOMINAL',     dist:'43.1 NM', note:'' },
+  // More decoy/filler...
+  { mmsi:'338120934', name:'USS FORREST SHR', flag:'US', type:'Warship', pos:'57°50\'N 19°30\'E', sog:'18.0',hdg:'090', status:'NOMINAL',    dist:'56.2 NM', note:'USN — authorized transit' },
+  { mmsi:'232567891', name:'HMS DEFENDER',   flag:'GB', type:'Warship', pos:'58°15\'N 18°44\'E', sog:'20.5',hdg:'070', status:'NOMINAL',     dist:'89.1 NM', note:'RN exercise BALTOPS' },
+  { mmsi:'311123456', name:'CAYMAN STAR',    flag:'KY', type:'Cargo',   pos:'57°12\'N 20°05\'E', sog:'9.3', hdg:'085', status:'NOMINAL',     dist:'24.6 NM', note:'' },
+  { mmsi:'352987012', name:'COLON BRIDGE',   flag:'PA', type:'Bulk',    pos:'56°31\'N 21°22\'E', sog:'12.4',hdg:'355', status:'NOMINAL',     dist:'55.8 NM', note:'' },
+  { mmsi:'440341209', name:'BUSAN TRADER',   flag:'KR', type:'Cargo',   pos:'58°40\'N 20°30\'E', sog:'10.9',hdg:'190', status:'NOMINAL',     dist:'79.5 NM', note:'' },
+  { mmsi:'477201345', name:'HONG KONG LINK', flag:'HK', type:'Cargo',   pos:'57°58\'N 21°43\'E', sog:'11.7',hdg:'230', status:'NOMINAL',     dist:'68.9 NM', note:'' },
+  { mmsi:'578456123', name:'JAKARTA FAST',   flag:'ID', type:'Tanker',  pos:'56°15\'N 20°48\'E', sog:'8.6', hdg:'010', status:'NOMINAL',     dist:'63.2 NM', note:'' },
+];
+
+// Pad out to simulate larger database with random ships
+const FILLER_FLAGS = ['DE','DK','SE','NO','FI','EE','LV','LT','PL','GB','NL','BE','FR','PT','ES','IT','GR','CY','MT','TR','RU'];
+const FILLER_TYPES = ['Cargo','Tanker','Bulk','Ferry','RoRo','Container','Research'];
+const FILLER_OWNERS = ['Baltic Freight GmbH','Nordic Sea Lines','Transatlantic AG','Gulf Cargo LLC','Polar Shipping AS','Sea Bridge Corp','Maritime Partners Ltd'];
+for (let i = 0; i < 400; i++) {
+  AIS_DATA.push({
+    mmsi: String(200000000 + Math.floor(Math.random()*99999999)).slice(0,9),
+    name: 'VESSEL-' + String(1000+i),
+    flag: FILLER_FLAGS[i % FILLER_FLAGS.length],
+    type: FILLER_TYPES[i % FILLER_TYPES.length],
+    pos: (55+Math.random()*5).toFixed(1)+'°N '+(15+Math.random()*10).toFixed(1)+'°E',
+    sog: (5+Math.random()*15).toFixed(1),
+    hdg: String(Math.floor(Math.random()*360)),
+    status: 'NOMINAL',
+    dist: (50+Math.random()*200).toFixed(1)+' NM',
+    note: ''
+  });
+}
+
+function buildAISTable() {
+  const tbody = document.getElementById('aisTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  AIS_DATA.forEach(v => {
+    const tr = document.createElement('tr');
+    let rowClass = '';
+    if (v.status === 'AIS-DARK' && v.name === 'KNYAZ VLADIMIR') rowClass = 'suspect';
+    else if (v.status === 'AIS-DARK') rowClass = 'mislead';
+    if (rowClass) tr.className = rowClass;
+    let statusColor = 'ais-ok';
+    if (v.status === 'AIS-DARK') statusColor = 'ais-dark';
+    else if (v.status === 'INTERMITTENT') statusColor = 'ais-warn';
+    tr.innerHTML = `
+      <td>${v.mmsi}</td>
+      <td>${v.name}</td>
+      <td>${v.flag}</td>
+      <td>${v.type}</td>
+      <td style="font-size:0.6rem">${v.pos}</td>
+      <td>${v.sog}</td>
+      <td>${v.hdg}°</td>
+      <td class="${statusColor}">${v.status}</td>
+      <td>${v.dist}</td>
+      <td style="color:var(--muted);font-size:0.6rem">${v.note}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ══════════════════════════════════════
+// E2 — AIS analysis
+// ══════════════════════════════════════
+function checkE2() {
+  const a = document.getElementById('e2a').value.trim();
+  const b = document.getElementById('e2b').value.trim().replace(/\s/g,'');
+  const fb = document.getElementById('e2fb');
+  const countOk = a === '3';
+  const mmsiOk  = b === '273841052';
+  if (countOk && mmsiOk) {
+    fb.textContent = '✓ Confirmed — 3 AIS-dark vessels in zone. MMSI 273841052 (KNYAZ VLADIMIR) is stationary at 0.0 kts directly over cable route. Proceeding to cable overlay.';
+    fb.className = 'feedback show ok';
+    document.getElementById('e2a').disabled = true;
+    document.getElementById('e2b').disabled = true;
+    document.getElementById('e2block').classList.add('success');
+    setTimeout(() => showStep(3), 1200);
+  } else if (!countOk && mmsiOk) {
+    fb.textContent = '✗ MMSI correct — but recount the AIS-DARK vessels within 15 NM. Check distance column carefully.';
+    fb.className = 'feedback show err';
+  } else if (countOk && !mmsiOk) {
+    fb.textContent = '✗ Count is correct (3 vessels) — but the MMSI is wrong. Among the 3 AIS-dark vessels, identify the one with SOG = 0.0.';
+    fb.className = 'feedback show err';
+  } else {
+    fb.textContent = '✗ Incorrect — Filter AIS STATUS = "AIS-DARK" and DIST ≤ 15 NM. Count those rows. Then find the one with speed 0.0 kts.';
+    fb.className = 'feedback show err';
+  }
+}
+
+// ══════════════════════════════════════
+// E3 — Cable crossref
+// ══════════════════════════════════════
+function checkE3() {
+  const a = document.getElementById('e3a').value.trim().toUpperCase().replace(/\s+/g,' ');
+  const b = document.getElementById('e3b').value.trim().toUpperCase().replace(/\s/g,'');
+  const fb = document.getElementById('e3fb');
+  const nameOk  = a.includes('KNYAZ VLADIMIR') || a.includes('KNYAZ');
+  const sectorOk = b === 'C2' || b === 'C-2';
+  if (nameOk && sectorOk) {
+    fb.textContent = '✓ Confirmed — KNYAZ VLADIMIR located 1.8 NM from SEA-ME-WE-BALT-3, sector C2 (57°N / 20-21°E). Fault zone locked. Proceeding to identity verification.';
+    fb.className = 'feedback show ok';
+    document.getElementById('e3a').disabled = true;
+    document.getElementById('e3b').disabled = true;
+    document.getElementById('e3block').classList.add('success');
+    buildVDB();
+    setTimeout(() => showStep(4), 1200);
+  } else if (nameOk) {
+    fb.textContent = '✗ Vessel correct — but re-examine the grid overlay. Which column (A/B/C/D) and row (1/2/3/4) is the fault zone in?';
+    fb.className = 'feedback show err';
+  } else {
+    fb.textContent = '✗ Incorrect — Look for the vessel directly annotated on the SEA-ME-WE-BALT-3 cable route, inside the red dashed fault zone circle.';
+    fb.className = 'feedback show err';
+  }
+}
+
+// ══════════════════════════════════════
+// VESSEL DB (Step 4)
+// ══════════════════════════════════════
+const VDB_DATA = [
+  // THE TARGET
+  { mmsi:'273841052', imo:'9612387', name:'KNYAZ VLADIMIR', flag:'Tanzania (TZ)', type:'General Cargo', owner:'Narvik Shipping Partners Ltd', lastPort:'Kaliningrad, Russia', status:'SIGNAL LOST', isTarget:true },
+  // Decoys with similar names
+  { mmsi:'273093821', imo:'9241876', name:'KNYAZ POTEMKIN', flag:'Russia (RU)', type:'Bulk Carrier', owner:'Black Sea Freight JSC', lastPort:'Novorossiysk, Russia', status:'IN PORT', isTarget:false },
+  { mmsi:'273512034', imo:'9387210', name:'KNJAZHICH',      flag:'Russia (RU)', type:'Tanker', owner:'Lena Maritime Co.', lastPort:'St. Petersburg, Russia', status:'NOMINAL', isTarget:false },
+  // Decoy: same flag, different vessel
+  { mmsi:'677821034', imo:'9512003', name:'ZANZIBAR TRADER',flag:'Tanzania (TZ)', type:'Cargo', owner:'East Africa Shipping', lastPort:'Dar es Salaam, Tanzania', status:'NOMINAL', isTarget:false },
+  // Decoy: similar route
+  { mmsi:'273900123', imo:'9430812', name:'KALININGRAD EXPRESS',flag:'Russia (RU)', type:'RoRo', owner:'Baltic Express LLC', lastPort:'Kaliningrad, Russia', status:'NOMINAL', isTarget:false },
+];
+
+// More filler for VDB
+const VDB_NAMES = ['OCEAN SPIRIT','SEA HAWK','NORDIC LION','POLAR DAWN','ARCTIC KING','BALTIC TRADER','GLOBAL LINK','PACIFIC STAR','ATLANTIC WAVE','EURO BRIDGE','MARINE EXPRESS','SEA PRINCESS','DEEP OCEAN','COASTAL DREAM','PORT HOPE'];
+for (let i = 0; i < 842; i++) {
+  VDB_DATA.push({
+    mmsi: String(200000000 + Math.floor(Math.random()*99999999)).slice(0,9),
+    imo:  String(9000000 + i),
+    name: VDB_NAMES[i % VDB_NAMES.length] + '-' + (i+1),
+    flag: FILLER_FLAGS[i % FILLER_FLAGS.length] + ' (' + FILLER_FLAGS[i % FILLER_FLAGS.length] + ')',
+    type: FILLER_TYPES[i % FILLER_TYPES.length],
+    owner: FILLER_OWNERS[i % FILLER_OWNERS.length],
+    lastPort: ['Rotterdam, Netherlands','Hamburg, Germany','Gdańsk, Poland','Riga, Latvia','Tallinn, Estonia','Helsinki, Finland','Stockholm, Sweden','Copenhagen, Denmark','Kiel, Germany'][i % 9],
+    status: 'NOMINAL',
+    isTarget: false,
+  });
+}
+
+function buildVDB() {
+  filterVDB('');
+}
+
+function filterVDB(query) {
+  const tbody = document.getElementById('vdbBody');
+  if (!tbody) return;
+  const filter = (document.getElementById('vdbFilter')||{}).value || '';
+  const q = query.toLowerCase();
+  const matches = VDB_DATA.filter(v => {
+    const textMatch = !q || v.name.toLowerCase().includes(q) || v.mmsi.includes(q) || v.imo.includes(q) || v.flag.toLowerCase().includes(q) || v.type.toLowerCase().includes(q);
+    const statusMatch = !filter || v.status === filter;
+    return textMatch && statusMatch;
+  });
+  document.getElementById('vdbCount').textContent = matches.length + ' records';
+  tbody.innerHTML = '';
+  const show = matches.slice(0, 200); // cap for performance
+  show.forEach(v => {
+    const tr = document.createElement('tr');
+    if (v.isTarget) tr.className = 'target-row';
+    const statusColor = v.status === 'SIGNAL LOST' ? 'color:var(--red)' : v.status === 'IN PORT' ? 'color:var(--yellow)' : 'color:var(--green)';
+    tr.innerHTML = `
+      <td>${v.mmsi}</td>
+      <td>${v.imo}</td>
+      <td style="${v.isTarget?'color:var(--red);font-weight:bold':''}">${v.name}</td>
+      <td>${v.flag}</td>
+      <td>${v.type}</td>
+      <td style="font-size:0.6rem;color:var(--muted)">${v.owner}</td>
+      <td style="font-size:0.62rem">${v.lastPort}</td>
+      <td style="${statusColor}" class="${v.status==='SIGNAL LOST'?'signal-lost':''}">${v.status}</td>
+    `;
+    if (v.isTarget) {
+      tr.onclick = () => { document.getElementById('ownerPanel').style.display = 'block'; tr.onclick = null; };
+      tr.style.cursor = 'pointer';
+      tr.title = 'Click to expand classified record';
     }
+    tbody.appendChild(tr);
+  });
+  if (matches.length > 200) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="8" style="text-align:center;color:var(--muted);font-size:0.65rem;padding:0.5rem">... and ${matches.length-200} more records — refine your search ...</td>`;
+    tbody.appendChild(tr);
   }
+}
 
-  // E2 — MMSI 273410820
-  document.getElementById('e2input').addEventListener('keydown', e => { if(e.key==='Enter') checkE2(); });
-  function checkE2() {
-    const v = document.getElementById('e2input').value.trim().replace(/\s/g,'');
-    const fb = document.getElementById('e2fb');
-    if (v === '273410820') {
-      fb.textContent = '✓ Confirmed — MMSI 273410820 (MV ORLAN VOSTOK) flagged. AIS dark period coincides exactly with fault event.';
-      fb.className = 'feedback show ok';
-      document.getElementById('e2input').disabled = true;
-      document.getElementById('e2block').classList.add('success');
-      setTimeout(() => showStep(3), 1000);
-    } else {
-      fb.textContent = '✗ Incorrect — Look for the vessel with an AIS anomaly flag and near-zero speed over the cable.';
-      fb.className = 'feedback show err';
-    }
+// ══════════════════════════════════════
+// E4 — Last port
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('e4input')) {
+    document.getElementById('e4input').addEventListener('keydown', e => { if(e.key==='Enter') checkE4(); });
   }
+});
+function checkE4() {
+  const v = document.getElementById('e4input').value.trim().toLowerCase();
+  const fb = document.getElementById('e4fb');
+  if (v.includes('kaliningrad') && (v.includes('russia') || v.includes('russie') || v.includes('russian'))) {
+    fb.textContent = '✓ Confirmed — KNYAZ VLADIMIR last departed Kaliningrad (Russia), a Russian exclave on the Baltic. Intelligence package complete. Pattern of life analysis: Kaliningrad → Baltic Sea → cable damage site. Proceeding to Phase 3.';
+    fb.className = 'feedback show ok';
+    document.getElementById('e4input').disabled = true;
+    document.getElementById('e4block').classList.add('success');
+    document.getElementById('continueBtn').classList.add('show');
+  } else if (v.includes('kaliningrad')) {
+    fb.textContent = '✗ City correct — also include the country. Check the registry record.';
+    fb.className = 'feedback show err';
+  } else {
+    fb.textContent = '✗ Incorrect — Locate KNYAZ VLADIMIR in the database (search by name), click to expand the classified record, and check the "Last Port" field.';
+    fb.className = 'feedback show err';
+  }
+}
 
-  // E3 — ORLAN VOSTOK
-  document.getElementById('e3input').addEventListener('keydown', e => { if(e.key==='Enter') checkE3(); });
-  function checkE3() {
-    const v = document.getElementById('e3input').value.trim().toUpperCase().replace(/\s+/g,' ');
-    const fb = document.getElementById('e3fb');
-    if (v === 'ORLAN VOSTOK' || v === 'MV ORLAN VOSTOK') {
-      fb.textContent = '✓ Confirmed — MV ORLAN VOSTOK positively identified in SAR imagery. Drag wake signature confirmed. Proceeding to origin lookup.';
-      fb.className = 'feedback show ok';
-      document.getElementById('e3input').disabled = true;
-      document.getElementById('e3block').classList.add('success');
-      setTimeout(() => showStep(4), 1000);
-    } else {
-      fb.textContent = '✗ Incorrect — Look for the vessel with the annotation box: stationary over cable, drag wake, AIS dark.';
-      fb.className = 'feedback show err';
-    }
-  }
-
-  // E4 — Kaliningrad, Russia
-  document.getElementById('e4input').addEventListener('keydown', e => { if(e.key==='Enter') checkE4(); });
-  function checkE4() {
-    const v = document.getElementById('e4input').value.trim().toLowerCase();
-    const fb = document.getElementById('e4fb');
-    if (v.includes('kaliningrad') && (v.includes('russia') || v.includes('russie'))) {
-      fb.textContent = '✓ Confirmed — MV ORLAN VOSTOK last departed Kaliningrad, Russia. Intelligence package assembled. Proceeding to Phase 3.';
-      fb.className = 'feedback show ok';
-      document.getElementById('e4input').disabled = true;
-      document.getElementById('e4block').classList.add('success');
-      document.getElementById('continueBtn').classList.add('show');
-    } else {
-      fb.textContent = '✗ Incorrect — Check the "Last Port" field in the AIS Archive entry.';
-      fb.className = 'feedback show err';
-    }
-  }
-
-  function goToPhase3() {
-    localStorage.setItem('crisisPhase', '3');
-    window.location.href = 'phase3.html';
-  }
+function goToPhase3() {
+  localStorage.setItem('crisisPhase', '3');
+  window.location.href = 'phase3.html';
+}
 </script>
 </body>
 </html>

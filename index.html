@@ -2,41 +2,240 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>OPERATION CUTLINE — Accueil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPERATION CUTLINE</title>
   <link rel="stylesheet" href="css/global.css">
   <style>
-    body { background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .main-container { text-align: center; z-index: 10; padding: 2rem; }
-    .team-selection { display: flex; gap: 2rem; margin-top: 3rem; justify-content: center; }
+    body {
+      background: var(--bg);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* ── Animated corner brackets ── */
+    .corner {
+      position: fixed; width: 48px; height: 48px;
+      pointer-events: none; z-index: 20;
+    }
+    .corner::before, .corner::after {
+      content: ''; position: absolute; background: rgba(74,158,255,0.5);
+    }
+    .corner::before { width: 2px; height: 100%; }
+    .corner::after  { height: 2px; width: 100%; }
+    .corner.tl { top: 1.5rem; left: 1.5rem; }
+    .corner.tr { top: 1.5rem; right: 1.5rem; transform: scaleX(-1); }
+    .corner.bl { bottom: 1.5rem; left: 1.5rem; transform: scaleY(-1); }
+    .corner.br { bottom: 1.5rem; right: 1.5rem; transform: scale(-1); }
+
+    /* ── Status bar ── */
+    .status-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+      display: flex; align-items: center; gap: 1.5rem;
+      padding: 0.6rem 2rem;
+      border-bottom: 1px solid rgba(74,158,255,0.1);
+      background: rgba(5,10,16,0.9);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.15em; color: var(--muted);
+    }
+    .status-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green);
+      animation: blink 2s infinite;
+    }
+    .status-clock { margin-left: auto; color: var(--accent); }
+
+    /* ── Main container ── */
+    .main-container {
+      text-align: center; z-index: 10;
+      padding: 2rem; position: relative;
+    }
+
+    /* ── Classification banner ── */
+    .classif {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.6rem;
+      letter-spacing: 0.3em; color: var(--red);
+      border: 1px solid rgba(255,74,74,0.3);
+      display: inline-block; padding: 0.2rem 1rem;
+      margin-bottom: 1.5rem;
+      background: rgba(255,74,74,0.04);
+    }
+
+    /* ── Glitch effect on title ── */
+    .main-title {
+      position: relative;
+      animation: appear 0.8s ease forwards;
+    }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .main-title::after {
+      content: 'CUTLINE';
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, calc(-50% + 2.2em));
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+      font-size: clamp(4rem, 12vw, 10rem);
+      -webkit-text-stroke: 2px var(--accent);
+      color: transparent; letter-spacing: 0.04em;
+      animation: glitch 4s infinite;
+      pointer-events: none;
+    }
+    @keyframes glitch {
+      0%,90%,100%  { clip-path: none; transform: translate(-50%, calc(-50% + 2.2em)); }
+      91%           { clip-path: inset(30% 0 40% 0); transform: translate(calc(-50% - 4px), calc(-50% + 2.2em)); }
+      92%           { clip-path: inset(55% 0 10% 0); transform: translate(calc(-50% + 4px), calc(-50% + 2.2em)); }
+      93%           { clip-path: none; transform: translate(-50%, calc(-50% + 2.2em)); }
+    }
+
+    /* ── Subtitle line ── */
+    .subtitle-line {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.2em; color: var(--muted); margin-bottom: 3rem;
+      animation: appear 0.8s 0.3s ease both;
+    }
+
+    /* ── Team selection ── */
+    .team-selection {
+      display: flex; gap: 2rem;
+      justify-content: center;
+      animation: appear 0.8s 0.5s ease both;
+    }
+
+    .team-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .team-card {
+      width: 240px; padding: 2rem 1.5rem;
+      border: 1px solid; transition: all 0.25s;
+      position: relative; overflow: hidden; text-align: left;
+    }
+    .team-card::after {
+      content: ''; position: absolute;
+      bottom: 0; left: 0; right: 0; height: 2px;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.25s;
+    }
+    .team-card.blue { border-color: rgba(74,158,255,0.3); background: rgba(74,158,255,0.03); }
+    .team-card.blue::after { background: var(--blue); }
+    .team-card.red  { border-color: rgba(255,74,74,0.3);  background: rgba(255,74,74,0.03);  }
+    .team-card.red::after  { background: var(--red); }
+    .team-card:hover { transform: translateY(-4px); }
+    .team-card.blue:hover { border-color: var(--blue); box-shadow: 0 12px 40px rgba(74,158,255,0.15); }
+    .team-card.red:hover  { border-color: var(--red);  box-shadow: 0 12px 40px rgba(255,74,74,0.15); }
+    .team-card:hover::after { transform: scaleX(1); }
+
+    .team-icon {
+      font-family: 'Share Tech Mono', monospace; font-size: 1.6rem;
+      margin-bottom: 1rem; display: block;
+    }
+    .team-card.blue .team-icon { color: var(--blue); }
+    .team-card.red  .team-icon { color: var(--red);  }
+
+    .team-name {
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+      font-size: 1.5rem; letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .team-card.blue .team-name { color: var(--blue); }
+    .team-card.red  .team-name { color: var(--red);  }
+
+    .team-role {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.62rem;
+      letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.5rem;
+    }
+
+    .team-tasks {
+      font-size: 0.78rem; color: var(--text-dim); line-height: 1.9;
+      margin-bottom: 1.25rem;
+    }
+    .team-tasks li { list-style: none; padding-left: 0; }
+    .team-tasks li::before { content: '▸ '; font-size: 0.6rem; }
+    .team-card.blue .team-tasks li::before { color: var(--blue); }
+    .team-card.red  .team-tasks li::before { color: var(--red);  }
+
+    .team-enter {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.1em; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .team-card.blue .team-enter { color: var(--blue); }
+    .team-card.red  .team-enter { color: var(--red);  }
+
+    /* ── Decorative grid lines behind cards ── */
+    .deco-line {
+      position: absolute; background: rgba(74,158,255,0.04);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <div class="scanline-overlay"></div>
   <div class="grid-bg"></div>
-  
+
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span>JOINT CRISIS RESPONSE EXERCISE</span>
+    <span>·</span>
+    <span>SECURE CHANNEL ACTIVE</span>
+    <span>·</span>
+    <span>ALL PERSONNEL STANDBY</span>
+    <span class="status-clock" id="statusClock">--:--:--</span>
+  </div>
+
   <div class="main-container">
-    <div class="op-label">Joint Crisis Response Exercise</div>
-    <h1 class="main-title">OPERATION<br><span>CUTLINE</span></h1>
-    
+    <div class="classif">⬛ TOP SECRET — EXERCISE ONLY ⬛</div>
+
+    <div class="op-label">Joint Crisis Response Exercise · NATO-PARTNER</div>
+    <h1 class="main-title">OPERATION<br></h1>
+
+    <p class="subtitle-line">SUBSEA INFRASTRUCTURE SABOTAGE — BALTIC THEATRE</p>
+
     <div class="team-selection">
       <button class="team-btn" onclick="selectTeam('blue')">
         <div class="team-card blue">
+          <span class="team-icon">◈</span>
           <div class="team-name">BLUE TEAM</div>
           <div class="team-role">Défense & Restauration</div>
-          <div class="team-enter">Entrer dans le briefing →</div>
+          <ul class="team-tasks">
+            <li>Localiser le sabotage</li>
+            <li>Identifier le navire</li>
+            <li>Restaurer les réseaux</li>
+          </ul>
+          <div class="team-enter">Entrer dans le briefing <span>→</span></div>
         </div>
       </button>
+
       <button class="team-btn" onclick="selectTeam('red')">
         <div class="team-card red">
+          <span class="team-icon">◆</span>
           <div class="team-name">RED TEAM</div>
           <div class="team-role">Interdiction & Nettoyage</div>
-          <div class="team-enter">Entrer dans le briefing →</div>
+          <ul class="team-tasks">
+            <li>Effacer les traces</li>
+            <li>Traverser le périmètre</li>
+            <li>Exfiltrer les données</li>
+          </ul>
+          <div class="team-enter">Entrer dans le briefing <span>→</span></div>
         </div>
       </button>
     </div>
   </div>
 
   <script>
+    // Clock
+    function tick() {
+      const now = new Date();
+      document.getElementById('statusClock').textContent =
+        now.toTimeString().slice(0,8);
+    }
+    tick(); setInterval(tick, 1000);
+
     function selectTeam(team) {
       localStorage.setItem('crisisTeam', team);
       localStorage.setItem('crisisPhase', '1');

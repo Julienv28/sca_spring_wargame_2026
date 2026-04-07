@@ -1,43 +1,26 @@
-const State = {
-  get team()  { return localStorage.getItem('crisisTeam') || 'blue'; },
-  get phase() { return parseInt(localStorage.getItem('crisisPhase') || '1'); },
-  set phase(v){ localStorage.setItem('crisisPhase', v); },
-  
-  // Canal de communication pour la course Phase 3
-  raceChannel: new BroadcastChannel('crisis_race_p3')
-};
+// ═══════════════════════════════════════════════════
+//  OPERATION CUTLINE — Global JS
+// ═══════════════════════════════════════════════════
 
-// Horloge UTC formatée "War Room"
-function startClock(elId) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const tick = () => {
-    const now = new Date();
-    el.textContent = now.toUTCString().split(' ')[4] + ' UTC — ' + 
-      now.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
-  };
-  tick(); setInterval(tick, 1000);
-}
-
-// Barre de navigation dynamique
-function renderTopBar(phaseNum, phaseName) {
+function renderTopBar(phaseNum, phaseTitle) {
+  const team = localStorage.getItem('crisisTeam') || 'blue';
   const bar = document.getElementById('topBar');
   if (!bar) return;
   bar.innerHTML = `
-    <div class="flex items-center gap2">
-      <span class="team-badge ${State.team}">${State.team === 'blue' ? '◈ BLUE TEAM' : '◈ RED TEAM'}</span>
-      <span>OPERATION CUTLINE</span>
-    </div>
-    <span>PHASE ${phaseNum} — ${phaseName}</span>
-    <span id="clock"></span>
+    <span class="op-tag">▸ OP CUTLINE</span>
+    <span class="dot">|</span>
+    <span class="phase-tag">PHASE ${phaseNum}</span>
+    <span class="dot">·</span>
+    <span>${phaseTitle}</span>
+    <span class="team-tag ${team}">${team.toUpperCase()} TEAM</span>
   `;
-  startClock('clock');
 }
 
-// Rendu des étapes de progression
-function renderSteps(steps, currentIdx) {
+function renderSteps(steps, activeIdx) {
   return steps.map((s, i) => {
-    let cls = i < currentIdx ? 'done' : (i === currentIdx ? 'active' : '');
-    return `<div class="step-item ${cls}">${s}</div>`;
+    let cls = 'step-pip';
+    if (i < activeIdx) cls += ' done';
+    else if (i === activeIdx) cls += ' current';
+    return `<div class="${cls}">${i < activeIdx ? '✓ ' : ''}${s}</div>`;
   }).join('');
 }
