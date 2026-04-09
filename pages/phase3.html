@@ -357,40 +357,47 @@
         <!-- Red Step 1: Multi-phase maze (Black→Grey→White walls) -->
         <div class="sub-step active" id="red-s1">
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">
-            PERIMETER BREACH — Navigate through the classified facility. Security zones are layered. You may only traverse walls in the order: <strong style="color:#222">BLACK</strong> → <strong style="color:#888">GREY</strong> → <strong style="color:#ddd">WHITE</strong>. Attempting to cross walls out of order triggers the alarm.
+            PERIMETER BREACH — Navigate through the classified facility. Security zones are layered.<br>
+            Walls between cells are coloured. You can only pass through wall colours in this strict order:<br>
+            <strong style="color:#cccccc">⬛ BLACK first</strong> → then <strong style="color:#999">▪ GREY</strong> → then <strong style="color:#eeeeee">▫ WHITE</strong>.<br>
+            Reach <strong style="color:var(--yellow)">CHECKPOINT 1</strong> to unlock grey walls, then <strong style="color:var(--yellow)">CHECKPOINT 2</strong> to unlock white walls, then reach the <strong style="color:var(--red)">GOAL</strong>.
           </div>
 
           <div class="maze-legend">
-            <span><span class="swatch" style="background:#111;border-color:#333"></span>Black zone (phase 1)</span>
-            <span><span class="swatch" style="background:#555;border-color:#888"></span>Grey zone (phase 2)</span>
-            <span><span class="swatch" style="background:#bbb;border-color:#ddd"></span>White zone (phase 3)</span>
-            <span><span class="swatch" style="background:#1a0f0a;border-color:#ff4a4a"></span>WALL (impassable)</span>
+            <span><span class="swatch" style="background:#1a1a1a;border-color:#444"></span>BLACK wall — passable from start</span>
+            <span><span class="swatch" style="background:#666;border-color:#999"></span>GREY wall — passable after CP1</span>
+            <span><span class="swatch" style="background:#ccc;border-color:#eee"></span>WHITE wall — passable after CP2</span>
+            <span><span class="swatch" style="background:#060d18;border-color:#1a3a5a"></span>Open corridor</span>
           </div>
 
           <div class="maze-phase-label" id="mazePhaseLabel">
-            Current phase: <span id="mazePhaseText" style="color:var(--red)">INITIALIZING</span> · 
-            Zones unlocked: <span id="mazeZonesText">none</span>
+            Phase: <span id="mazePhaseText" style="color:#cccccc">BLACK walls open</span> &nbsp;·&nbsp;
+            Checkpoints: <span id="mazeZonesText" style="color:var(--muted)">0 / 2</span>
           </div>
 
           <div class="maze-wrap">
-            <canvas id="mazeCanvas" width="390" height="390"></canvas>
+            <canvas id="mazeCanvas"></canvas>
           </div>
 
           <div class="maze-controls">
-            <button onclick="mazeMove('up')" title="Up (W/↑)">↑</button>
-            <button onclick="mazeMove('left')" title="Left (A/←)">←</button>
-            <button onclick="mazeMove('down')" title="Down (S/↓)">↓</button>
-            <button onclick="mazeMove('right')" title="Right (D/→)">→</button>
+            <div style="display:grid;grid-template-columns:44px 44px 44px;gap:4px;justify-content:center">
+              <div></div>
+              <button onclick="mazeMove('up')" title="Up (W/↑)">↑</button>
+              <div></div>
+              <button onclick="mazeMove('left')" title="Left (A/←)">←</button>
+              <button onclick="mazeMove('down')" title="Down (S/↓)">↓</button>
+              <button onclick="mazeMove('right')" title="Right (D/→)">→</button>
+            </div>
           </div>
 
-          <div style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,74,74,0.1);text-align:center" id="mazeStatus">
-            START → navigate to the server room (RED marker)
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;padding:0.4rem 0.6rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,74,74,0.1);text-align:center;margin-top:0.4rem" id="mazeStatus">
+            Navigate from START (bottom-left) → CP1 (yellow) → CP2 (yellow) → GOAL (red)
           </div>
 
           <!-- Hidden enemy note in maze section -->
           <div class="enemy-note">
-            "Трасса через чёрный сектор, затем серый коридор D-7, затем белый терминал. Не отклоняйся. Сервер на юго-востоке."
-            <br><span style="color:var(--muted);font-size:0.55rem">[TL: "Route through black sector, then grey corridor D-7, then white terminal. Do not deviate. Server is south-east."]</span>
+            "Трасса через чёрный сектор, затем серый коридор, затем белый терминал. Не отклоняйся. Сервер на северо-востоке."
+            <br><span style="color:var(--muted);font-size:0.55rem">[No translation provided]</span>
           </div>
         </div>
 
@@ -631,185 +638,267 @@ function simonPress(c) {
 }
 
 // ══════════════════════════════════
-// RED — Maze (Black→Grey→White)
+// RED — Maze (Black→Grey→White walls)
 // ══════════════════════════════════
-// Phase 1 (black walls), 2 (grey walls), 3 (white walls)
-// Larger grid: 13x13 cells
-const CELL = 30, COLS = 13, ROWS = 13;
-const CANVAS_W = COLS * CELL, CANVAS_H = ROWS * CELL;
+// Architecture: walls are EDGES between cells, not tiles.
+// Each cell can have up to 4 walls: N, E, S, W.
+// Wall colours: 0=no wall, 1=BLACK, 2=GREY, 3=WHITE
+// Phase 1: only BLACK walls are passable (open). Grey+White block.
+// Phase 2: BLACK+GREY passable. White blocks.
+// Phase 3: ALL passable.
+// You must reach CP1 first to unlock phase 2, CP2 to unlock phase 3.
+
+const ROWS = 10, COLS = 10;
+const CELL = 36;   // pixels per cell
+const WALL = 5;    // wall thickness in pixels
+const CANVAS_W = COLS * CELL + WALL;
+const CANVAS_H = ROWS * CELL + WALL;
+
 const mazeCanvas = document.getElementById('mazeCanvas');
 mazeCanvas.width  = CANVAS_W;
 mazeCanvas.height = CANVAS_H;
 
-let playerPos = {x:0, y:12};      // START: bottom-left
-const goal     = {x:12, y:0};      // GOAL: top-right
-let mazePhase  = 1;                 // 1=black walls only, 2=+grey, 3=+white
-let phasesCompleted = 0;
+// hWalls[r][c] = wall BELOW cell (r,c), i.e. between row r and r+1. 0=open,1=black,2=grey,3=white
+// vWalls[r][c] = wall RIGHT of cell (r,c), i.e. between col c and c+1.
+// Boundary walls (top/left/right/bottom edges) are always solid (drawn separately).
 
-// Phase intermediate goals
-const phaseGoals = [
-  {x:6, y:6},   // Phase 1 checkpoint (center)
-  {x:12, y:6},  // Phase 2 checkpoint (right middle)
-  {x:12, y:0},  // Final goal
+// 0 = open passage, 1 = black wall, 2 = grey wall, 3 = white wall
+// Horizontal walls: hWalls[r][c] is wall between row r and row r+1 at column c
+const hWalls = [
+// col:  0   1   2   3   4   5   6   7   8   9
+  [  1,  0,  1,  0,  2,  0,  1,  0,  2,  0 ],  // between row 0 and 1
+  [  0,  2,  0,  1,  0,  3,  0,  1,  0,  1 ],  // between row 1 and 2
+  [  1,  0,  2,  0,  1,  0,  1,  0,  3,  0 ],  // between row 2 and 3
+  [  0,  1,  0,  2,  0,  1,  0,  2,  0,  1 ],  // between row 3 and 4
+  [  2,  0,  1,  0,  3,  0,  2,  0,  1,  0 ],  // between row 4 and 5
+  [  0,  3,  0,  1,  0,  2,  0,  1,  0,  2 ],  // between row 5 and 6
+  [  1,  0,  3,  0,  1,  0,  3,  0,  2,  0 ],  // between row 6 and 7
+  [  0,  2,  0,  1,  0,  3,  0,  2,  0,  1 ],  // between row 7 and 8
+  [  1,  0,  1,  0,  2,  0,  1,  0,  3,  0 ],  // between row 8 and 9
+];
+// Vertical walls: vWalls[r][c] is wall between col c and col c+1 at row r
+const vWalls = [
+// col:  0   1   2   3   4   5   6   7   8
+  [  1,  0,  2,  0,  1,  0,  3,  0,  1 ],  // row 0
+  [  0,  1,  0,  3,  0,  2,  0,  1,  0 ],  // row 1
+  [  2,  0,  1,  0,  2,  0,  1,  0,  2 ],  // row 2
+  [  0,  3,  0,  1,  0,  1,  0,  2,  0 ],  // row 3
+  [  1,  0,  2,  0,  3,  0,  2,  0,  1 ],  // row 4
+  [  0,  1,  0,  2,  0,  1,  0,  3,  0 ],  // row 5
+  [  3,  0,  1,  0,  1,  0,  2,  0,  1 ],  // row 6
+  [  0,  2,  0,  3,  0,  2,  0,  1,  0 ],  // row 7
+  [  1,  0,  2,  0,  1,  0,  3,  0,  2 ],  // row 8
+  [  0,  1,  0,  2,  0,  1,  0,  2,  0 ],  // row 9
 ];
 
-// Wall colors per cell: 0=open, 1=black wall, 2=grey wall, 3=white wall
-// This 13x13 maze is much harder — longer path required
-const mazeGrid = [
-//  0  1  2  3  4  5  6  7  8  9 10 11 12
-  [ 0, 1, 0, 0, 0, 2, 0, 3, 0, 0, 0, 1, 0 ],  // row 0 (top)
-  [ 0, 1, 0, 1, 0, 2, 0, 3, 1, 1, 0, 1, 0 ],  // row 1
-  [ 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 2
-  [ 1, 1, 0, 1, 2, 2, 1, 1, 0, 1, 3, 3, 0 ],  // row 3
-  [ 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0 ],  // row 4
-  [ 0, 1, 1, 1, 1, 2, 0, 1, 2, 2, 0, 1, 0 ],  // row 5
-  [ 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 6 (center)
-  [ 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 3 ],  // row 7
-  [ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],  // row 8
-  [ 0, 1, 2, 2, 1, 0, 1, 0, 3, 3, 1, 1, 0 ],  // row 9
-  [ 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0 ],  // row 10
-  [ 0, 0, 0, 1, 1, 1, 2, 1, 0, 1, 0, 1, 1 ],  // row 11
-  [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],  // row 12 (bottom, START at 0,12)
+// Player, checkpoints, goal
+let playerPos = { x: 0, y: ROWS - 1 };  // START: bottom-left cell (col 0, row 9)
+const checkpoints = [
+  { x: 4, y: 5 },   // CP1 — centre-left area
+  { x: 8, y: 2 },   // CP2 — upper-right area
 ];
+const goalPos = { x: COLS - 1, y: 0 };  // GOAL: top-right cell
 
-const WALL_COLORS = {
-  1: { fill:'#111111', stroke:'#333333', label:'BLACK'  },
-  2: { fill:'#555555', stroke:'#888888', label:'GREY'   },
-  3: { fill:'#bbbbbb', stroke:'#dddddd', label:'WHITE'  },
+let mazePhase = 1;        // 1=only black passable, 2=+grey, 3=+white
+let cpReached = 0;        // 0, 1, or 2
+
+const WALL_COLORS_DRAW = {
+  1: { solid: '#2a2a2a', open: 'rgba(60,60,60,0.25)' },    // black
+  2: { solid: '#777777', open: 'rgba(120,120,120,0.25)' },  // grey
+  3: { solid: '#cccccc', open: 'rgba(200,200,200,0.25)' },  // white
 };
 
-function wallPassable(wallType) {
-  // Black walls: passable in phase ≥ 1 (never — they are walls)
-  // Actually: wall type N is passable only when phase >= N
-  // So: black (1) = always wall (never passable), grey (2) phase≥2, white (3) phase≥3
-  // Wait — re-reading the user: BLACK→GREY→WHITE walls can only be TRAVERSED in that order
-  // Meaning phase 1: can cross black walls; phase 2: can cross grey walls; phase 3: can cross white walls
-  if (wallType === 1 && mazePhase >= 1) return true;
-  if (wallType === 2 && mazePhase >= 2) return true;
-  if (wallType === 3 && mazePhase >= 3) return true;
+function wallPassable(wType) {
+  // A wall of type wType can be passed only if its phase is unlocked
+  if (wType === 0) return true;   // no wall — always open
+  if (wType === 1) return mazePhase >= 1;  // black: open from phase 1
+  if (wType === 2) return mazePhase >= 2;  // grey: open from phase 2
+  if (wType === 3) return mazePhase >= 3;  // white: open from phase 3
   return false;
 }
 
+function getWallBetween(fromX, fromY, toX, toY) {
+  // Returns the wall type between two adjacent cells. 0 = no wall.
+  const dx = toX - fromX, dy = toY - fromY;
+  if (dy === 1) { // moving DOWN: hWalls[fromY][fromX]
+    const r = fromY; if (r < 0 || r >= hWalls.length) return 1;
+    return hWalls[r][fromX] ?? 1;
+  }
+  if (dy === -1) { // moving UP: hWalls[toY][fromX]
+    const r = toY; if (r < 0 || r >= hWalls.length) return 1;
+    return hWalls[r][fromX] ?? 1;
+  }
+  if (dx === 1) { // moving RIGHT: vWalls[fromY][fromX]
+    const c = fromX; if (c < 0 || c >= vWalls[fromY].length) return 1;
+    return vWalls[fromY][c] ?? 1;
+  }
+  if (dx === -1) { // moving LEFT: vWalls[fromY][toX]
+    const c = toX; if (c < 0 || c >= vWalls[fromY].length) return 1;
+    return vWalls[fromY][c] ?? 1;
+  }
+  return 1;
+}
+
+function cellX(c) { return c * CELL + WALL; }
+function cellY(r) { return r * CELL + WALL; }
+
 function drawMaze() {
   const ctx = mazeCanvas.getContext('2d');
-  ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
+  // Background
+  ctx.fillStyle = '#030810';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Draw cells
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
-      const x = c * CELL, y = r * CELL;
-      const cell = mazeGrid[r][c];
-      if (cell === 0) {
-        ctx.fillStyle = '#060d18';
-        ctx.fillRect(x, y, CELL, CELL);
-      } else {
-        const wc = WALL_COLORS[cell];
-        ctx.fillStyle = wc.fill;
-        ctx.fillRect(x, y, CELL, CELL);
-        ctx.strokeStyle = wc.stroke;
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(x+0.5, y+0.5, CELL-1, CELL-1);
-        // Mark walls passable in current phase with subtle tint
-        if (wallPassable(cell)) {
-          ctx.fillStyle = cell === 1 ? 'rgba(74,158,255,0.12)' : cell === 2 ? 'rgba(245,197,66,0.1)' : 'rgba(61,220,132,0.1)';
-          ctx.fillRect(x, y, CELL, CELL);
-        }
-      }
+      const x = cellX(c), y = cellY(r);
+      ctx.fillStyle = '#071020';
+      ctx.fillRect(x, y, CELL - WALL, CELL - WALL);
     }
   }
 
-  // Phase checkpoints
-  phaseGoals.forEach((pg, i) => {
-    if (i === phasesCompleted) {
-      const x = pg.x * CELL, y = pg.y * CELL;
-      ctx.fillStyle = i === 2 ? 'rgba(255,74,74,0.3)' : 'rgba(245,197,66,0.2)';
-      ctx.fillRect(x, y, CELL, CELL);
-      ctx.fillStyle = i === 2 ? '#ff4a4a' : '#f5c542';
-      ctx.font = 'bold 9px Share Tech Mono, monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(i === 2 ? 'GOAL' : 'CP'+(i+1), x+CELL/2, y+CELL/2+3);
-    }
+  // Mark checkpoints and goal
+  const cpColors = ['rgba(245,197,66,0.18)', 'rgba(245,197,66,0.18)', 'rgba(255,74,74,0.18)'];
+  const allMarkers = [...checkpoints, goalPos];
+  allMarkers.forEach((m, i) => {
+    if (i < cpReached) return; // already visited, don't re-mark
+    const x = cellX(m.x), y = cellY(m.y);
+    ctx.fillStyle = cpColors[i] || 'rgba(255,74,74,0.18)';
+    ctx.fillRect(x, y, CELL - WALL, CELL - WALL);
+    ctx.fillStyle = i === 2 ? '#ff4a4a' : '#f5c542';
+    ctx.font = 'bold 8px Share Tech Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i === 2 ? 'GOAL' : 'CP' + (i + 1), x + (CELL - WALL) / 2, y + (CELL - WALL) / 2);
   });
 
-  // Player
-  ctx.fillStyle = 'rgba(74,158,255,0.9)';
-  ctx.fillRect(playerPos.x*CELL+4, playerPos.y*CELL+4, CELL-8, CELL-8);
-  ctx.fillStyle = '#4a9eff';
-  ctx.font = '8px Share Tech Mono, monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('YOU', playerPos.x*CELL+CELL/2, playerPos.y*CELL+CELL/2+3);
-
   // START label
-  ctx.fillStyle = 'rgba(74,158,255,0.4)';
+  const sx = cellX(0), sy = cellY(ROWS - 1);
+  ctx.fillStyle = 'rgba(74,158,255,0.1)';
+  ctx.fillRect(sx, sy, CELL - WALL, CELL - WALL);
+  ctx.fillStyle = 'rgba(74,158,255,0.5)';
   ctx.font = '7px Share Tech Mono, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('START', 0+CELL/2, 12*CELL+CELL-3);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('START', sx + (CELL - WALL) / 2, sy + (CELL - WALL) / 2);
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(74,158,255,0.04)';
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i <= COLS; i++) { ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,CANVAS_H); ctx.stroke(); }
-  for (let j = 0; j <= ROWS; j++) { ctx.beginPath(); ctx.moveTo(0,j*CELL); ctx.lineTo(CANVAS_W,j*CELL); ctx.stroke(); }
+  // Draw horizontal walls (between rows)
+  for (let r = 0; r < hWalls.length; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const wType = hWalls[r][c];
+      if (wType === 0) continue;
+      const x = cellX(c);
+      const y = (r + 1) * CELL;  // wall is at the bottom edge of row r
+      const passable = wallPassable(wType);
+      const wc = WALL_COLORS_DRAW[wType];
+      ctx.fillStyle = passable ? wc.open : wc.solid;
+      ctx.fillRect(x, y, CELL - WALL, WALL);
+    }
+  }
+
+  // Draw vertical walls (between columns)
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < vWalls[r].length; c++) {
+      const wType = vWalls[r][c];
+      if (wType === 0) continue;
+      const x = (c + 1) * CELL;  // wall is at the right edge of col c
+      const y = cellY(r);
+      const passable = wallPassable(wType);
+      const wc = WALL_COLORS_DRAW[wType];
+      ctx.fillStyle = passable ? wc.open : wc.solid;
+      ctx.fillRect(x, y, WALL, CELL - WALL);
+    }
+  }
+
+  // Draw outer border
+  ctx.strokeStyle = 'rgba(255,74,74,0.3)';
+  ctx.lineWidth = WALL;
+  ctx.strokeRect(WALL / 2, WALL / 2, CANVAS_W - WALL, CANVAS_H - WALL);
+
+  // Draw player
+  const px = cellX(playerPos.x), py = cellY(playerPos.y);
+  ctx.fillStyle = 'rgba(74,158,255,0.85)';
+  ctx.fillRect(px + 3, py + 3, CELL - WALL - 6, CELL - WALL - 6);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 8px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('▶', px + (CELL - WALL) / 2, py + (CELL - WALL) / 2);
 }
 
 function updateMazePhaseUI() {
-  const phaseNames = ['—','BLACK','GREY','WHITE'];
-  const phaseColors = ['','#aaa','#888','#ddd'];
-  document.getElementById('mazePhaseText').textContent = phaseNames[mazePhase] + ' WALLS ACTIVE';
-  document.getElementById('mazePhaseText').style.color = phaseColors[mazePhase];
-  const zones = [];
-  if (mazePhase >= 1) zones.push('<span style="color:#aaa">BLACK</span>');
-  if (mazePhase >= 2) zones.push('<span style="color:#888">GREY</span>');
-  if (mazePhase >= 3) zones.push('<span style="color:#ddd">WHITE</span>');
-  document.getElementById('mazeZonesText').innerHTML = zones.join(' + ') || 'none';
+  const labels = ['—', 'BLACK walls open', 'BLACK + GREY open', 'ALL walls open'];
+  document.getElementById('mazePhaseText').textContent = labels[mazePhase];
+  const colors = ['','#cccccc','#999','#eeeeee'];
+  document.getElementById('mazePhaseText').style.color = colors[mazePhase];
+  document.getElementById('mazeZonesText').textContent = cpReached + ' / 2';
 }
 
 function mazeMove(dir) {
   let nx = playerPos.x, ny = playerPos.y;
-  if (dir==='up')    ny--;
-  if (dir==='down')  ny++;
-  if (dir==='left')  nx--;
-  if (dir==='right') nx++;
-  if (nx<0||ny<0||nx>=COLS||ny>=ROWS) return;
-  const cell = mazeGrid[ny][nx];
-  if (cell !== 0 && !wallPassable(cell)) {
-    const wc = WALL_COLORS[cell] || {};
-    const needed = cell === 2 ? 'GREY phase (reach checkpoint 1 first)' : 'WHITE phase (reach checkpoint 2 first)';
-    document.getElementById('mazeStatus').textContent = `⚠ BLOCKED — ${wc.label || ''} wall requires ${needed}`;
+  if (dir === 'up')    ny--;
+  if (dir === 'down')  ny++;
+  if (dir === 'left')  nx--;
+  if (dir === 'right') nx++;
+
+  // Boundary check
+  if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) return;
+
+  // Get wall between current cell and destination
+  const wType = getWallBetween(playerPos.x, playerPos.y, nx, ny);
+  const status = document.getElementById('mazeStatus');
+
+  if (!wallPassable(wType)) {
+    const wallName = wType === 1 ? 'BLACK' : wType === 2 ? 'GREY' : 'WHITE';
+    const needed  = wType === 2 ? 'Reach CP1 first to unlock GREY walls'
+                  : wType === 3 ? 'Reach CP2 first to unlock WHITE walls'
+                  : 'Blocked';
+    status.textContent = `⚠ BLOCKED — ${wallName} wall. ${needed}.`;
+    status.style.color = 'var(--red)';
     return;
   }
-  playerPos = {x:nx, y:ny};
-  drawMaze();
 
-  // Check phase checkpoints
-  const pg = phaseGoals[phasesCompleted];
-  if (nx === pg.x && ny === pg.y) {
-    phasesCompleted++;
-    if (phasesCompleted === 1) {
-      mazePhase = 2;
-      document.getElementById('mazeStatus').textContent = '✓ Checkpoint 1 reached — GREY walls now passable. Continue to checkpoint 2.';
-      updateMazePhaseUI(); drawMaze(); return;
+  // Move
+  playerPos = { x: nx, y: ny };
+  status.style.color = 'var(--muted)';
+
+  // Check for checkpoint/goal
+  if (cpReached < checkpoints.length) {
+    const cp = checkpoints[cpReached];
+    if (nx === cp.x && ny === cp.y) {
+      cpReached++;
+      mazePhase = cpReached + 1;
+      const cpMsg = cpReached === 1
+        ? '✓ CHECKPOINT 1 — GREY walls now passable. Proceed to Checkpoint 2.'
+        : '✓ CHECKPOINT 2 — WHITE walls now passable. Reach the GOAL.';
+      status.textContent = cpMsg;
+      status.style.color = 'var(--yellow)';
+      updateMazePhaseUI();
+      drawMaze();
+      return;
     }
-    if (phasesCompleted === 2) {
-      mazePhase = 3;
-      document.getElementById('mazeStatus').textContent = '✓ Checkpoint 2 reached — WHITE walls now passable. Reach the GOAL.';
-      updateMazePhaseUI(); drawMaze(); return;
-    }
-    if (phasesCompleted === 3) {
-      // GOAL!
-      document.getElementById('mazeStatus').textContent = '✓ SERVER ROOM REACHED — deploying cleanup script...';
-      document.getElementById('redProgress').textContent = 'STEP 2/2';
-      setTimeout(() => {
-        document.getElementById('red-s1').classList.remove('active');
-        document.getElementById('red-s2').classList.add('active');
-      }, 900);
-    }
+  } else if (nx === goalPos.x && ny === goalPos.y) {
+    status.textContent = '✓ SERVER ROOM REACHED — deploying cleanup script...';
+    status.style.color = 'var(--green)';
+    document.getElementById('redProgress').textContent = 'STEP 2/2';
+    drawMaze();
+    setTimeout(() => {
+      document.getElementById('red-s1').classList.remove('active');
+      document.getElementById('red-s2').classList.add('active');
+    }, 900);
+    return;
   }
+
+  drawMaze();
 }
 
 // Keyboard
 document.addEventListener('keydown', e => {
   if (!redLane.classList.contains('active')) return;
-  const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right', w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right' };
+  const map = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+                w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right' };
   if (map[e.key]) { e.preventDefault(); mazeMove(map[e.key]); }
 });
 
