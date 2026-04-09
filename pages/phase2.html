@@ -189,54 +189,76 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
-         STEP 2 — AIS TRAFFIC: find vessels close enough to be suspects
+         STEP 2 — OSINT AIS ANALYSIS: proximity reasoning, no distance column
          ══════════════════════════════════════════════════════════ -->
     <div class="step-section" id="step2">
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 2/4</div>
-        <div class="phase-title">AIS Traffic Analysis — Candidate Vessel Identification</div>
+        <div class="phase-title">AIS Traffic Analysis — Proximity Reasoning</div>
         <div class="phase-desc">
-          The AIS network covering the Baltic recorded <strong>58 vessels</strong> in the incident window (2024-01-11 18:00Z → 2024-01-12 06:00Z).
-          The fault location you identified is at approximately <span class="coord-pill">57°N / 21°E</span>.
+          The following raw AIS export covers <strong>58 vessels</strong> logged in the Baltic Sea during the incident window (<strong>2024-01-11 18:00Z → 2024-01-12 06:00Z</strong>).
+          You have already identified the approximate fault coordinates in Step 1.
           <br><br>
-          All vessels in the database show an AIS signal — however, some experienced <strong>intermittent dropouts</strong> during the fault window. Your task: identify the <strong>3 vessels</strong> whose last known position was within <strong>15 nautical miles</strong> of the fault point AND that had intermittent AIS signals during the fault window.
+          Using <strong>only the vessel positions and your fault coordinates</strong>, determine which vessels were close enough to the fault location to be candidate suspects. There is <strong>no pre-calculated distance column</strong> — you must reason from the coordinates yourself (estimate on a map, use a tool, or calculate manually: 1° latitude ≈ 111 km, 1° longitude at 57°N ≈ 60 km).
           <br><br>
-          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ NOTE DOWN the 3 vessel names and MMSI numbers — you will need them in Step 3.</span>
+          <strong>Important context:</strong> The area around 57°N / 20–21°E is also traversed by the <span style="color:var(--yellow)">Baltika cable</span> — a Russian-operated line connecting Kaliningrad to St. Petersburg. Several vessels in the area may be legitimately associated with Russian cable maintenance operations on <em>their own infrastructure</em>. You need to distinguish between suspicious presence and legitimate activity.
+          <br><br>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ NOTE DOWN the 3 vessel names and MMSI numbers closest to the fault — you will need them in Step 3.</span>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-tag">AIS-ARCHIVE</span>
-          <span class="panel-title">Vessel Traffic Service — Baltic Sea · 2024-01-11 18:00Z to 2024-01-12 06:00Z · 58 contacts</span>
+          <span class="panel-tag">AIS-ARCHIVE · RAW EXPORT</span>
+          <span class="panel-title">Baltic Sea VTS — 2024-01-11 18:00Z to 2024-01-12 06:00Z · 58 contacts · No filter applied</span>
         </div>
-        <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+
+        <!-- Context box: cable geography for OSINT reasoning -->
+        <div style="padding:0.75rem;margin-bottom:0.75rem;background:rgba(74,158,255,0.03);border:1px solid rgba(74,158,255,0.1);border-left:3px solid rgba(74,158,255,0.4)">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:0.5rem">CABLE GEOGRAPHY — REFERENCE</div>
+          <div style="font-size:0.78rem;color:var(--muted);line-height:1.8">
+            <span style="color:var(--text)">NordBalt</span> — telecommunications fiber, Lithuania (Klaipeda) ↔ Sweden (Gotland/Norrköping), runs NE–SW through the fault zone.<br>
+            <span style="color:var(--yellow)">Baltika</span> — Russian cable (Kaliningrad ↔ St. Petersburg), partially overlaps with NordBalt route near 57°N. Russian vessels on cable survey duty are <em>not inherently suspicious</em> — Baltika maintenance is documented for this period.<br>
+            <span style="color:var(--muted)">Threshold for suspect proximity: within ~15 nautical miles (≈ 28 km) of the fault location.</span>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;max-height:440px;overflow-y:auto">
           <table class="ais-table">
             <thead>
               <tr>
                 <th>MMSI</th><th>VESSEL NAME</th><th>FLAG</th><th>TYPE</th>
-                <th>LAST POS</th><th>SOG kts</th><th>HDG</th>
-                <th>AIS STATUS</th><th>DIST TO FAULT</th><th>NOTE</th>
+                <th>LAST POSITION (lat/lon)</th><th>SOG kts</th><th>HDG°</th>
+                <th>AIS STATUS</th><th>NOTE</th>
               </tr>
             </thead>
             <tbody id="aisTableBody"></tbody>
           </table>
         </div>
         <div style="padding:0.5rem 0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--muted);border-top:1px solid rgba(74,158,255,0.08)">
-          58 vessels · INTERMITTENT = signal dropouts during incident window · NOMINAL = continuous tracking
+          Raw export — no distance filter applied. INTERMITTENT = signal dropouts during window. NOMINAL = continuous tracking.
+          Positions are last known fix before signal event. Use your Step 1 coordinates to assess proximity manually.
         </div>
+      </div>
+
+      <!-- Coordinate calculation helper -->
+      <div style="padding:0.75rem;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.05);font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:1rem">
+        <span style="color:var(--accent);letter-spacing:0.1em;font-size:0.58rem">DISTANCE ESTIMATION GUIDE</span><br>
+        At ~57°N: &nbsp; Δ1° latitude ≈ 111 km ≈ 60 NM &nbsp;·&nbsp; Δ1° longitude ≈ 60 km ≈ 33 NM<br>
+        Quick check: fault at ~57°N/21°E. A vessel at 57°18'N / 20°49'E is roughly <span style="color:var(--text)">Δ0.3° lat (~18 km N) + Δ0.18° lon (~11 km W)</span> → approx. distance ≈ <span style="color:var(--text)">√(18²+11²) ≈ 21 km ≈ 11 NM</span>.<br>
+        <span style="color:rgba(245,197,66,0.5)">You can also use online tools (e.g. <em>distancefrom.com</em>, Google Maps ruler, or MarineTraffic) to measure between coordinates.</span>
       </div>
 
       <div class="enigma-block" id="e2block">
         <div class="enigma-q">
-          Which <strong>3 vessels</strong> had an intermittent AIS signal AND were within <strong>15 NM</strong> of the fault location at last fix?<br>
-          <span style="font-size:0.78rem;color:var(--muted)">Enter their MMSI numbers separated by commas. These are your candidates for the next step.</span>
+          Using the vessel positions and your fault coordinates from Step 1, identify the <strong>3 vessels</strong> with an intermittent AIS signal whose last known position was within approximately <strong>15 nautical miles</strong> of the fault.<br>
+          <span style="font-size:0.78rem;color:var(--muted);display:block;margin-top:0.4rem">Enter their MMSI numbers separated by commas. Note: some intermittent vessels are far from the fault — presence near the Baltika cable route does not automatically qualify them.</span>
         </div>
-        <div class="enigma-hint">// Filter: AIS STATUS = INTERMITTENT, then check DIST TO FAULT ≤ 15 NM. There are exactly 3.</div>
+        <div class="enigma-hint">// No distance column is provided. Estimate from coordinates. Exactly 3 INTERMITTENT vessels qualify on proximity.</div>
         <div class="flex gap1 mt2" style="flex-wrap:wrap">
           <div style="flex:1;min-width:300px">
             <div style="font-size:0.63rem;color:var(--muted);margin-bottom:0.25rem">3 MMSI NUMBERS (comma-separated):</div>
-            <input class="mono-input" id="e2mmsi" placeholder="273841052, 230456789, 211834560" autocomplete="off">
+            <input class="mono-input" id="e2mmsi" placeholder="e.g. 273841052, 230456789, 211834560" autocomplete="off">
           </div>
           <button class="btn btn-primary" onclick="checkE2()" style="align-self:flex-end">VERIFY</button>
         </div>
@@ -347,9 +369,11 @@
         <div class="phase-number">PHASE 02 · ENIGMA 4/4</div>
         <div class="phase-title">Affected Cable — Infrastructure Identification</div>
         <div class="phase-desc">
-          You now know the fault coordinates from Step 1. No cable map is provided here — you must use <strong>publicly available submarine cable resources</strong> (e.g. submarinecablemap.com, TeleGeography database) to overlay the fault location and determine which cable was severed.
+          You now know the fault coordinates from Step 1. No cable map is provided here — you must use <strong>publicly available submarine cable resources</strong> to overlay the fault location and identify which cable was severed.
           <br><br>
-          The fault is located at approximately <span class="coord-pill" id="confirmedCoords">57°N / 21°E</span> — use the precise coordinates you identified in Step 1.
+          The fault is at approximately <span class="coord-pill" id="confirmedCoords">57°N / 21°E</span> (use your precise Step 1 coordinates).
+          <br><br>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ Be precise: multiple cables cross this region of the Baltic. One is a Russian-operated cable with a notified maintenance window. You need to identify specifically the <em>affected</em> cable — the one declared faulty by the reporting country.</span>
         </div>
       </div>
 
@@ -377,14 +401,15 @@
           </div>
         </div>
 
-        <!-- Contextual intelligence fragments to help narrow it down -->
+        <!-- Contextual intelligence fragments — steer toward NordBalt without naming it -->
         <div style="margin-top:1rem;padding:0.75rem;border:1px solid rgba(245,197,66,0.15);background:rgba(245,197,66,0.03)">
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--yellow);margin-bottom:0.5rem;letter-spacing:0.1em">INTELLIGENCE FRAGMENTS</div>
           <ul style="font-size:0.78rem;color:var(--muted);list-style:none;padding:0;line-height:2">
-            <li>▸ The reporting country that declared the outage <strong style="color:var(--text)">uses this cable as a primary telecom link to Western Europe</strong></li>
-            <li>▸ The cable runs roughly <strong style="color:var(--text)">SW–NE</strong> through this portion of the Baltic</li>
-            <li>▸ Signal loss confirmed on a link connecting a <strong style="color:var(--text)">Nordic or Baltic state</strong> to the wider European backbone</li>
-            <li>▸ The cable is <strong style="color:var(--text)">not a power interconnector</strong> — it is a telecommunications fiber cable</li>
+            <li>▸ The outage was <strong style="color:var(--text)">declared by the Lithuanian telecommunications authority</strong> at 04:22 UTC — citing total loss of their primary westbound fiber link</li>
+            <li>▸ The cable connects a <strong style="color:var(--text)">Baltic state to Sweden</strong> — approximately 450 km in length, laid 2009–2010</li>
+            <li>▸ The cable is a <strong style="color:var(--text)">telecommunications fiber optic cable</strong>, not a power or gas interconnector</li>
+            <li>▸ A <span style="color:var(--yellow)">second cable of Russian ownership</span> runs through the same corridor and connects Kaliningrad to St. Petersburg — its operator has a maintenance window on record for this period. This <strong style="color:var(--text)">complicates attribution</strong>.</li>
+            <li>▸ <span style="color:var(--muted);font-size:0.72rem">Cross-reference: open submarinecablemap.com → navigate to your Step 1 coordinates → identify the telecom cable linking Lithuania to Sweden through this zone</span></li>
           </ul>
         </div>
       </div>
@@ -474,71 +499,88 @@ function checkE1() {
 }
 
 // ══════════════════════════════════════
-// AIS DATA
-// The 3 INTERMITTENT vessels within 15 NM are:
-//   273841052 SILVER MOON      1.8 NM
-//   230456789 MV NORDVIK      12.5 NM
-//   211834560 MV GREIFSWALD    9.2 NM
-// All others are either NOMINAL or INTERMITTENT but >15 NM
+// ══════════════════════════════════════
+// AIS DATA — Step 2
+// NO distance column. Players must compute proximity from coordinates.
+// Fault centre: ~57°00'N / 20°55'E  (accepted range from E1: 56–58°N, 20–22°E)
+//
+// 3 correct suspects — INTERMITTENT, within ~15 NM:
+//   273841052  SILVER MOON       57°18'N 20°49'E  ≈11 NM   Cargo, TZ flag
+//   230456789  MV NORDVIK        57°22'N 20°31'E  ≈13 NM   Tanker, FI flag
+//   211834560  MV GREIFSWALD     57°08'N 20°57'E  ≈8 NM    RoRo, DE flag
+//
+// Key narrative decoy:
+//   273901234  BALTIKA SURVEY    57°12'N 20°44'E  ≈7.5 NM  Research, RU flag
+//              INTERMITTENT + very close to fault BUT note = "Baltika cable
+//              maintenance — AUTHORIZED". This is the crisis-sim red herring:
+//              Russia claims any ship presence = legitimate Baltika maintenance.
+//              Players who include this vessel must be told it's authorized.
+//
+// Other decoys — INTERMITTENT but outside 15 NM:
+//   566412387  SINGAPORE ACE     57°25'N 21°08'E  ≈16 NM   just outside threshold
+//   311123456  CAYMAN STAR       57°12'N 20°05'E  ≈30 NM   far
+//   273098741  LADOGA CARRIER    57°42'N 22°48'E  ≈90 NM   very far
 // ══════════════════════════════════════
 const CORRECT_MMSI = ['273841052','230456789','211834560'];
 
 const AIS_DATA = [
-  // The 3 suspects — INTERMITTENT, within 15 NM
-  { mmsi:'273841052', name:'SILVER MOON',       flag:'TZ', type:'Cargo',    pos:"57°18'N 20°49'E", sog:'0.3',  hdg:'182', status:'INTERMITTENT', dist:'1.8 NM',   note:'Multiple dropouts 03:50–04:35' },
-  { mmsi:'230456789', name:'MV NORDVIK',         flag:'FI', type:'Tanker',   pos:"57°22'N 20°31'E", sog:'0.2',  hdg:'090', status:'INTERMITTENT', dist:'12.5 NM',  note:'Comms antenna fault reported' },
-  { mmsi:'211834560', name:'MV GREIFSWALD',      flag:'DE', type:'RoRo',     pos:"57°08'N 20°57'E", sog:'0.0',  hdg:'000', status:'INTERMITTENT', dist:'9.2 NM',   note:'At anchor — periodic dropout' },
-  // INTERMITTENT but >15 NM — decoys
-  { mmsi:'566412387', name:'SINGAPORE ACE',      flag:'SG', type:'Cargo',    pos:"57°25'N 21°00'E", sog:'6.4',  hdg:'245', status:'INTERMITTENT', dist:'18.4 NM',  note:'GPS antenna fault reported' },
-  { mmsi:'273901234', name:'BALTICA SPIRIT',     flag:'RU', type:'Research', pos:"57°19'N 21°12'E", sog:'3.1',  hdg:'280', status:'INTERMITTENT', dist:'22.7 NM',  note:'Research vessel equipment interference' },
-  { mmsi:'311123456', name:'CAYMAN STAR',        flag:'KY', type:'Cargo',    pos:"57°12'N 20°05'E", sog:'9.3',  hdg:'085', status:'INTERMITTENT', dist:'24.6 NM',  note:'Flag-state transponder issue' },
-  { mmsi:'273098741', name:'LADOGA CARRIER',     flag:'RU', type:'Cargo',    pos:"57°42'N 22°48'E", sog:'8.5',  hdg:'280', status:'INTERMITTENT', dist:'88.1 NM',  note:'Software glitch logged' },
-  // NOMINAL vessels — various distances
-  { mmsi:'276543210', name:'NORDIC CARRIER',     flag:'EE', type:'Cargo',    pos:"57°41'N 20°12'E", sog:'11.2', hdg:'215', status:'NOMINAL',      dist:'28.4 NM',  note:'' },
-  { mmsi:'265834710', name:'GOTEHOLM',           flag:'SE', type:'Tanker',   pos:"58°02'N 19°48'E", sog:'9.8',  hdg:'180', status:'NOMINAL',      dist:'45.1 NM',  note:'' },
-  { mmsi:'257612340', name:'STAVANGER SUN',      flag:'NO', type:'Cargo',    pos:"56°52'N 21°03'E", sog:'13.4', hdg:'315', status:'NOMINAL',      dist:'31.2 NM',  note:'' },
-  { mmsi:'209341256', name:'NICOSIA TRADER',     flag:'CY', type:'Bulk',     pos:"57°30'N 21°15'E", sog:'7.6',  hdg:'270', status:'NOMINAL',      dist:'19.8 NM',  note:'' },
-  { mmsi:'244810293', name:'AMSTERDAM STAR',     flag:'NL', type:'Cargo',    pos:"57°15'N 19°50'E", sog:'10.1', hdg:'095', status:'NOMINAL',      dist:'37.6 NM',  note:'' },
-  { mmsi:'636091234', name:'PACIFIC GLORY',      flag:'LR', type:'Tanker',   pos:"58°11'N 20°44'E", sog:'8.3',  hdg:'200', status:'NOMINAL',      dist:'51.3 NM',  note:'' },
-  { mmsi:'248341205', name:'VALLETTA WAVE',      flag:'MT', type:'Cargo',    pos:"56°44'N 20°29'E", sog:'12.0', hdg:'350', status:'NOMINAL',      dist:'38.4 NM',  note:'' },
-  { mmsi:'212834561', name:'ODER PRINCESS',      flag:'DE', type:'Ferry',    pos:"56°55'N 20°38'E", sog:'18.2', hdg:'022', status:'NOMINAL',      dist:'26.5 NM',  note:'' },
-  { mmsi:'271983456', name:'TRABZON STAR',       flag:'TR', type:'Bulk',     pos:"57°48'N 20°52'E", sog:'9.0',  hdg:'185', status:'NOMINAL',      dist:'33.8 NM',  note:'' },
-  { mmsi:'232451987', name:'CLYDE FORTRESS',     flag:'GB', type:'Cargo',    pos:"57°04'N 21°08'E", sog:'11.5', hdg:'310', status:'NOMINAL',      dist:'22.1 NM',  note:'' },
-  { mmsi:'246387120', name:'ROTTERDAM WIND',     flag:'NL', type:'Tanker',   pos:"58°24'N 19°55'E", sog:'7.8',  hdg:'170', status:'NOMINAL',      dist:'67.3 NM',  note:'' },
-  { mmsi:'205671340', name:'ANTWERP EAGLE',      flag:'BE', type:'Cargo',    pos:"57°38'N 21°34'E", sog:'10.3', hdg:'255', status:'NOMINAL',      dist:'41.9 NM',  note:'' },
-  { mmsi:'351234876', name:'CRISTOBAL PASS',     flag:'PA', type:'Bulk',     pos:"56°38'N 20°11'E", sog:'8.9',  hdg:'045', status:'NOMINAL',      dist:'49.7 NM',  note:'' },
-  { mmsi:'255841230', name:'LISBON QUEEN',       flag:'PT', type:'Cargo',    pos:"58°00'N 21°02'E", sog:'12.6', hdg:'220', status:'NOMINAL',      dist:'44.2 NM',  note:'' },
-  { mmsi:'277341098', name:'VISTULA DAWN',       flag:'PL', type:'Cargo',    pos:"57°00'N 20°01'E", sog:'9.4',  hdg:'095', status:'NOMINAL',      dist:'36.6 NM',  note:'' },
-  { mmsi:'276120987', name:'TALLINK STAR',       flag:'EE', type:'Ferry',    pos:"59°28'N 24°42'E", sog:'21.0', hdg:'300', status:'NOMINAL',      dist:'189 NM',   note:'Tallinn–Helsinki route' },
-  { mmsi:'265432198', name:'BIRKA PRINCESS',     flag:'SE', type:'Ferry',    pos:"59°10'N 20°14'E", sog:'19.3', hdg:'045', status:'NOMINAL',      dist:'105 NM',   note:'' },
-  { mmsi:'230871234', name:'FINNLADY',           flag:'FI', type:'Ferry',    pos:"60°05'N 22°16'E", sog:'22.1', hdg:'250', status:'NOMINAL',      dist:'167 NM',   note:'' },
-  { mmsi:'266783456', name:'STENA LINE HSS',     flag:'SE', type:'Ferry',    pos:"56°10'N 15°38'E", sog:'16.0', hdg:'080', status:'NOMINAL',      dist:'142 NM',   note:'' },
-  { mmsi:'259834512', name:'MF BERGENSFJORD',    flag:'NO', type:'Cargo',    pos:"58°44'N 17°28'E", sog:'10.8', hdg:'130', status:'NOMINAL',      dist:'98.4 NM',  note:'' },
-  { mmsi:'273512098', name:'VOLGA TRANSIT',      flag:'RU', type:'Tanker',   pos:"57°55'N 22°10'E", sog:'6.2',  hdg:'270', status:'NOMINAL',      dist:'72.3 NM',  note:'' },
-  { mmsi:'645321089', name:'MOMBASA QUEEN',      flag:'KE', type:'Bulk',     pos:"56°24'N 19°14'E", sog:'11.1', hdg:'060', status:'NOMINAL',      dist:'74.8 NM',  note:'' },
-  { mmsi:'566012345', name:'OCEAN PIONEER',      flag:'SG', type:'Tanker',   pos:"58°32'N 21°56'E", sog:'9.7',  hdg:'215', status:'NOMINAL',      dist:'82.0 NM',  note:'' },
-  { mmsi:'209512874', name:'EURO SPRINTER',      flag:'CY', type:'Cargo',    pos:"56°48'N 21°31'E", sog:'13.8', hdg:'340', status:'NOMINAL',      dist:'43.1 NM',  note:'' },
-  { mmsi:'338120934', name:'USS FORREST SHERMAN',flag:'US', type:'Warship',  pos:"57°50'N 19°30'E", sog:'18.0', hdg:'090', status:'NOMINAL',      dist:'56.2 NM',  note:'USN — authorized transit' },
-  { mmsi:'232567891', name:'HMS DEFENDER',       flag:'GB', type:'Warship',  pos:"58°15'N 18°44'E", sog:'20.5', hdg:'070', status:'NOMINAL',      dist:'89.1 NM',  note:'RN exercise BALTOPS' },
-  { mmsi:'352987012', name:'COLON BRIDGE',       flag:'PA', type:'Bulk',     pos:"56°31'N 21°22'E", sog:'12.4', hdg:'355', status:'NOMINAL',      dist:'55.8 NM',  note:'' },
-  { mmsi:'440341209', name:'BUSAN TRADER',       flag:'KR', type:'Cargo',    pos:"58°40'N 20°30'E", sog:'10.9', hdg:'190', status:'NOMINAL',      dist:'79.5 NM',  note:'' },
-  { mmsi:'477201345', name:'HONG KONG LINK',     flag:'HK', type:'Cargo',    pos:"57°58'N 21°43'E", sog:'11.7', hdg:'230', status:'NOMINAL',      dist:'68.9 NM',  note:'' },
-  { mmsi:'578456123', name:'JAKARTA FAST',       flag:'ID', type:'Tanker',   pos:"56°15'N 20°48'E", sog:'8.6',  hdg:'010', status:'NOMINAL',      dist:'63.2 NM',  note:'' },
+  // ── Shuffled order — suspects not clustered at top ──
+  { mmsi:'276543210', name:'NORDIC CARRIER',      flag:'EE', type:'Cargo',    pos:"57°41'N 20°12'E", sog:'11.2', hdg:'215', status:'NOMINAL',      note:'' },
+  { mmsi:'273841052', name:'SILVER MOON',          flag:'TZ', type:'Cargo',    pos:"57°18'N 20°49'E", sog:'0.3',  hdg:'182', status:'INTERMITTENT', note:'Multiple signal dropouts 03:50–04:35 UTC' },
+  { mmsi:'265834710', name:'GOTEHOLM',             flag:'SE', type:'Tanker',   pos:"58°02'N 19°48'E", sog:'9.8',  hdg:'180', status:'NOMINAL',      note:'' },
+  { mmsi:'209341256', name:'NICOSIA TRADER',       flag:'CY', type:'Bulk',     pos:"57°30'N 21°15'E", sog:'7.6',  hdg:'270', status:'NOMINAL',      note:'' },
+  { mmsi:'257612340', name:'STAVANGER SUN',        flag:'NO', type:'Cargo',    pos:"56°52'N 21°03'E", sog:'13.4', hdg:'315', status:'NOMINAL',      note:'' },
+  // ── KEY DECOY: BALTIKA SURVEY — Russian vessel, close to fault, INTERMITTENT, but AUTHORIZED ──
+  { mmsi:'273901234', name:'BALTIKA SURVEY',       flag:'RU', type:'Research', pos:"57°12'N 20°44'E", sog:'1.2',  hdg:'045', status:'INTERMITTENT', note:'Baltika cable survey — authorized maintenance window notified to BSHC ref. BLT-2024-0108' },
+  { mmsi:'244810293', name:'AMSTERDAM STAR',       flag:'NL', type:'Cargo',    pos:"57°15'N 19°50'E", sog:'10.1', hdg:'095', status:'NOMINAL',      note:'' },
+  { mmsi:'230456789', name:'MV NORDVIK',           flag:'FI', type:'Tanker',   pos:"57°22'N 20°31'E", sog:'0.2',  hdg:'090', status:'INTERMITTENT', note:'Comms antenna fault reported by crew at 03:55Z' },
+  { mmsi:'636091234', name:'PACIFIC GLORY',        flag:'LR', type:'Tanker',   pos:"58°11'N 20°44'E", sog:'8.3',  hdg:'200', status:'NOMINAL',      note:'' },
+  { mmsi:'271983456', name:'TRABZON STAR',         flag:'TR', type:'Bulk',     pos:"57°48'N 20°52'E", sog:'9.0',  hdg:'185', status:'NOMINAL',      note:'' },
+  { mmsi:'248341205', name:'VALLETTA WAVE',        flag:'MT', type:'Cargo',    pos:"56°44'N 20°29'E", sog:'12.0', hdg:'350', status:'NOMINAL',      note:'' },
+  // ── Russian fleet vessel — NOMINAL, part of same Baltika op convoy ──
+  { mmsi:'273098741', name:'LADOGA CARRIER',       flag:'RU', type:'Cargo',    pos:"57°42'N 22°48'E", sog:'8.5',  hdg:'280', status:'INTERMITTENT', note:'Fleet-wide AIS firmware update 2024-01-12 — same Baltika maintenance convoy' },
+  { mmsi:'212834561', name:'ODER PRINCESS',        flag:'DE', type:'Ferry',    pos:"56°55'N 20°38'E", sog:'18.2', hdg:'022', status:'NOMINAL',      note:'' },
+  { mmsi:'232451987', name:'CLYDE FORTRESS',       flag:'GB', type:'Cargo',    pos:"57°04'N 21°08'E", sog:'11.5', hdg:'310', status:'NOMINAL',      note:'' },
+  { mmsi:'246387120', name:'ROTTERDAM WIND',       flag:'NL', type:'Tanker',   pos:"58°24'N 19°55'E", sog:'7.8',  hdg:'170', status:'NOMINAL',      note:'' },
+  { mmsi:'211834560', name:'MV GREIFSWALD',        flag:'DE', type:'RoRo',     pos:"57°08'N 20°57'E", sog:'0.0',  hdg:'000', status:'INTERMITTENT', note:'At anchor — periodic AIS dropout, battery issue in log' },
+  { mmsi:'205671340', name:'ANTWERP EAGLE',        flag:'BE', type:'Cargo',    pos:"57°38'N 21°34'E", sog:'10.3', hdg:'255', status:'NOMINAL',      note:'' },
+  // ── DECOY: just outside 15 NM, INTERMITTENT ──
+  { mmsi:'566412387', name:'SINGAPORE ACE',        flag:'SG', type:'Cargo',    pos:"57°25'N 21°08'E", sog:'6.4',  hdg:'245', status:'INTERMITTENT', note:'GPS antenna fault reported to MPA flag-state' },
+  { mmsi:'351234876', name:'CRISTOBAL PASS',       flag:'PA', type:'Bulk',     pos:"56°38'N 20°11'E", sog:'8.9',  hdg:'045', status:'NOMINAL',      note:'' },
+  { mmsi:'255841230', name:'LISBON QUEEN',         flag:'PT', type:'Cargo',    pos:"58°00'N 21°02'E", sog:'12.6', hdg:'220', status:'NOMINAL',      note:'' },
+  { mmsi:'277341098', name:'VISTULA DAWN',         flag:'PL', type:'Cargo',    pos:"57°00'N 20°01'E", sog:'9.4',  hdg:'095', status:'NOMINAL',      note:'' },
+  // ── DECOY: INTERMITTENT + position sounds plausible but is ~30 NM ──
+  { mmsi:'311123456', name:'CAYMAN STAR',          flag:'KY', type:'Cargo',    pos:"57°12'N 20°05'E", sog:'9.3',  hdg:'085', status:'INTERMITTENT', note:'Flag-state transponder recertification in progress' },
+  { mmsi:'276120987', name:'TALLINK STAR',         flag:'EE', type:'Ferry',    pos:"59°28'N 24°42'E", sog:'21.0', hdg:'300', status:'NOMINAL',      note:'Tallinn–Helsinki scheduled service' },
+  { mmsi:'265432198', name:'BIRKA PRINCESS',       flag:'SE', type:'Ferry',    pos:"59°10'N 20°14'E", sog:'19.3', hdg:'045', status:'NOMINAL',      note:'' },
+  { mmsi:'230871234', name:'FINNLADY',             flag:'FI', type:'Ferry',    pos:"60°05'N 22°16'E", sog:'22.1', hdg:'250', status:'NOMINAL',      note:'' },
+  { mmsi:'266783456', name:'STENA LINE HSS',       flag:'SE', type:'Ferry',    pos:"56°10'N 15°38'E", sog:'16.0', hdg:'080', status:'NOMINAL',      note:'' },
+  { mmsi:'259834512', name:'MF BERGENSFJORD',      flag:'NO', type:'Cargo',    pos:"58°44'N 17°28'E", sog:'10.8', hdg:'130', status:'NOMINAL',      note:'' },
+  { mmsi:'273512098', name:'VOLGA TRANSIT',        flag:'RU', type:'Tanker',   pos:"57°55'N 22°10'E", sog:'6.2',  hdg:'270', status:'NOMINAL',      note:'Enroute St. Petersburg — fuel run' },
+  { mmsi:'645321089', name:'MOMBASA QUEEN',        flag:'KE', type:'Bulk',     pos:"56°24'N 19°14'E", sog:'11.1', hdg:'060', status:'NOMINAL',      note:'' },
+  { mmsi:'566012345', name:'OCEAN PIONEER',        flag:'SG', type:'Tanker',   pos:"58°32'N 21°56'E", sog:'9.7',  hdg:'215', status:'NOMINAL',      note:'' },
+  { mmsi:'209512874', name:'EURO SPRINTER',        flag:'CY', type:'Cargo',    pos:"56°48'N 21°31'E", sog:'13.8', hdg:'340', status:'NOMINAL',      note:'' },
+  { mmsi:'338120934', name:'USS FORREST SHERMAN',  flag:'US', type:'Warship',  pos:"57°50'N 19°30'E", sog:'18.0', hdg:'090', status:'NOMINAL',      note:'USN — authorized Baltic transit, coordinates confirmed NATO HQ' },
+  { mmsi:'232567891', name:'HMS DEFENDER',         flag:'GB', type:'Warship',  pos:"58°15'N 18°44'E", sog:'20.5', hdg:'070', status:'NOMINAL',      note:'RN exercise BALTOPS — scheduled' },
+  { mmsi:'352987012', name:'COLON BRIDGE',         flag:'PA', type:'Bulk',     pos:"56°31'N 21°22'E", sog:'12.4', hdg:'355', status:'NOMINAL',      note:'' },
+  { mmsi:'440341209', name:'BUSAN TRADER',         flag:'KR', type:'Cargo',    pos:"58°40'N 20°30'E", sog:'10.9', hdg:'190', status:'NOMINAL',      note:'' },
+  { mmsi:'477201345', name:'HONG KONG LINK',       flag:'HK', type:'Cargo',    pos:"57°58'N 21°43'E", sog:'11.7', hdg:'230', status:'NOMINAL',      note:'' },
+  { mmsi:'578456123', name:'JAKARTA FAST',         flag:'ID', type:'Tanker',   pos:"56°15'N 20°48'E", sog:'8.6',  hdg:'010', status:'NOMINAL',      note:'' },
 ];
 
-// Filler to 58 total
-const FF = ['DE','DK','SE','NO','FI','EE','LV','LT','PL','GB','NL','BE','MT','TR','RU'];
+// Pad to 58 total with filler
+const FF = ['DE','DK','SE','NO','FI','EE','LV','LT','PL','GB','NL','BE','MT','TR'];
 const FT = ['Cargo','Tanker','Bulk','Ferry','RoRo','Container'];
 while (AIS_DATA.length < 58) {
   const i = AIS_DATA.length;
+  const lat = (55.5 + Math.random()*4.5).toFixed(2);
+  const lon = (15.0 + Math.random()*12.0).toFixed(2);
   AIS_DATA.push({
-    mmsi: String(200000000 + i * 31337).slice(0,9),
-    name: 'VESSEL-' + (1000+i),
-    flag: FF[i % FF.length], type: FT[i % FT.length],
-    pos:  (55+Math.random()*4).toFixed(1)+"°N "+(16+Math.random()*8).toFixed(1)+"°E",
-    sog:  (6+Math.random()*12).toFixed(1), hdg: String(Math.floor(Math.random()*360)),
-    status: 'NOMINAL',
-    dist: (30+Math.random()*160).toFixed(1)+' NM', note: ''
+    mmsi: String(200000000 + i * 31337 + 99).slice(0,9),
+    name: 'VESSEL-' + (1000+i), flag: FF[i%FF.length], type: FT[i%FT.length],
+    pos: lat + "°N " + lon + "°E",
+    sog: (5+Math.random()*14).toFixed(1), hdg: String(Math.floor(Math.random()*360)),
+    status: 'NOMINAL', note: ''
   });
 }
 
@@ -546,17 +588,23 @@ function buildAISTable() {
   const tbody = document.getElementById('aisTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
-  AIS_DATA.forEach(v => {
+  // Shuffle so suspects aren't always at same position
+  const shuffled = [...AIS_DATA].sort(() => Math.random() - 0.5);
+  shuffled.forEach(v => {
     const tr = document.createElement('tr');
-    const isNearIntermittent = v.status === 'INTERMITTENT' && CORRECT_MMSI.includes(v.mmsi);
-    if (isNearIntermittent) tr.className = 'near-zone';
+    const isBaltikaDecoy = v.mmsi === '273901234';
+    if (CORRECT_MMSI.includes(v.mmsi)) tr.className = 'near-zone';
     const sc = v.status === 'INTERMITTENT' ? 'ais-warn' : 'ais-ok';
     tr.innerHTML = `
-      <td>${v.mmsi}</td><td>${v.name}</td><td>${v.flag}</td><td>${v.type}</td>
-      <td style="font-size:0.6rem">${v.pos}</td><td>${v.sog}</td><td>${v.hdg}°</td>
+      <td>${v.mmsi}</td>
+      <td>${v.name}</td>
+      <td style="color:${['RU','TZ'].includes(v.flag)?'var(--yellow)':'var(--muted)'}">${v.flag}</td>
+      <td>${v.type}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.02em">${v.pos}</td>
+      <td>${v.sog}</td>
+      <td>${v.hdg}°</td>
       <td class="${sc}">${v.status}</td>
-      <td style="color:${parseFloat(v.dist)<=15?'var(--yellow)':'var(--muted)'}">${v.dist}</td>
-      <td class="ais-note">${v.note}</td>
+      <td class="ais-note" style="color:${isBaltikaDecoy?'rgba(245,197,66,0.6)':'var(--muted)'}">${v.note}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -570,18 +618,24 @@ function checkE2() {
   const fb = document.getElementById('e2fb');
 
   if (entered.length === 3 && correct.every(m => entered.includes(m))) {
-    fb.textContent = '✓ Correct — 3 candidate vessels identified: SILVER MOON (273841052), MV NORDVIK (230456789), MV GREIFSWALD (211834560). Note these down — proceed to SIGINT analysis.';
+    fb.textContent = '✓ Correct — 3 candidate vessels within ~15 NM: SILVER MOON (273841052), MV NORDVIK (230456789), MV GREIFSWALD (211834560). Note: BALTIKA SURVEY (273901234) was close but its presence is covered by an authorized Baltika cable maintenance notification — it remains a point of contention for the crisis simulation. Proceed to SIGINT.';
     fb.className = 'feedback show ok';
     document.getElementById('e2mmsi').disabled = true;
     document.getElementById('e2block').classList.add('success');
     buildVDB();
     setTimeout(() => showStep(3), 1200);
   } else if (entered.length !== 3) {
-    fb.textContent = `✗ Incorrect count — you listed ${entered.length} vessel(s). Filter for INTERMITTENT status AND distance ≤ 15 NM. There are exactly 3.`;
+    const hint = entered.length > 3
+      ? '✗ Too many vessels. Note: BALTIKA SURVEY (273901234) is INTERMITTENT and close, but its presence is documented as an authorized Baltika cable maintenance operation — rule it out on that basis. Count only unaccounted INTERMITTENT vessels within ~15 NM.'
+      : `✗ Not enough vessels — you listed ${entered.length}. Identify all INTERMITTENT contacts and estimate their distance from your Step 1 coordinates. Use the calculation guide above.`;
+    fb.textContent = hint;
     fb.className = 'feedback show err';
   } else {
     const wrong = entered.filter(m => !correct.includes(m));
-    fb.textContent = `✗ One or more MMSI numbers are incorrect (${wrong.join(', ')}). Double-check: only INTERMITTENT vessels within 15 NM qualify.`;
+    const baltikaIncluded = wrong.includes('273901234');
+    fb.textContent = baltikaIncluded
+      ? '✗ BALTIKA SURVEY (273901234) is a decoy — it was on an authorized Baltika cable maintenance operation (ref. BLT-2024-0108). Its INTERMITTENT signal is explained by survey equipment interference. Remove it and find the third vessel.'
+      : `✗ One or more MMSI numbers incorrect (${wrong.join(', ')}). Re-estimate distances from your Step 1 coordinates for all INTERMITTENT vessels.`;
     fb.className = 'feedback show err';
   }
 }
@@ -835,38 +889,45 @@ function checkE3() {
 
 // ══════════════════════════════════════
 // E4 — Cable name
-// Real answer at 57°N/21°E Baltic: "Amber" cable (TeleGeography)
-// Also accept: SEA-ME-WE Baltic, EstLink (electricity but a common guess), NordBalt
-// Strictly correct: the "Amber" cable or "BALT-1" depending on the tool
-// Accept multiple reasonable answers with guidance
+// CORRECT: NordBalt (Lithuania ↔ Sweden, telecom fiber)
+// This cable runs through the fault zone at ~57°N/20–21°E.
+// The nearby Baltika cable (Russian, Kaliningrad↔St.Petersburg) overlaps
+// the same general route — this ambiguity is intentional for the crisis sim.
+// Players must specifically identify NordBalt as the affected cable.
+// Common wrong answers and their feedback:
+//   - "Baltika" → explain it's the Russian cable, not the affected one
+//   - "Amber" → different cable, runs further south
+//   - "EstLink" → power cable, not telecom
+//   - "C-Lion1" → runs further east, Finland-Germany
 // ══════════════════════════════════════
 document.getElementById('e4input').addEventListener('keydown', e => { if(e.key==='Enter') checkE4(); });
 function checkE4() {
   const v = document.getElementById('e4input').value.trim().toLowerCase();
   const fb = document.getElementById('e4fb');
 
-  // Accept: Amber, NordBalt, BCS East-West Interlink, any reasonable Baltic fiber cable
-  const accepted = [
-    'amber', 'nordbalt', 'nord balt', 'balt-1', 'bcs east', 'east-west interlink',
-    'sea-me-we', 'seamew', 'sea me we', 'balticconnector', 'baltic connector',
-    'estlink', 'est-link', 'c-lion', 'clion', 'lion1'
-  ];
-  const isAccepted = accepted.some(a => v.includes(a));
-
-  if (isAccepted) {
-    fb.textContent = '✓ Confirmed — Cable identified. Intelligence package complete. Fault location + suspect vessel + affected infrastructure all locked. Proceeding to Phase 3.';
+  if (v.includes('nordbalt') || v.includes('nord balt')) {
+    fb.textContent = '✓ Confirmed — NordBalt identified. This telecommunications fiber cable (Lithuania/Klaipeda ↔ Sweden/Norrköping, ~450km) passes directly through the fault zone at 57°N/20–21°E. Key context for Phase 3: the nearby Baltika cable (Russian, overlapping route) will be claimed as justification for Russian vessel presence. Intelligence package complete. Proceeding to Phase 3.';
     fb.className = 'feedback show ok';
     document.getElementById('e4input').disabled = true;
     document.getElementById('e4block').classList.add('success');
     document.getElementById('continueBtn').classList.add('show');
-  } else if (v.includes('estlink') || v.includes('est link')) {
-    fb.textContent = '⚠ EstLink is a power cable, not a telecom fiber cable. The intel fragments specify a telecommunications cable. Re-check the map.';
+  } else if (v.includes('baltika') || v.includes('baltika cable')) {
+    fb.textContent = '⚠ Close — Baltika is a Russian-operated cable (Kaliningrad ↔ St. Petersburg) that shares this corridor. However, the outage was declared by Lithuania/Sweden, affecting their link to Western Europe. Baltika was not the cable that was severed. Which cable connects Lithuania to Sweden through this zone?';
+    fb.className = 'feedback show err';
+  } else if (v.includes('amber')) {
+    fb.textContent = '✗ The Amber cable runs further south (Gdańsk corridor, ~54–55°N). Your fault coordinates place the incident further north. Re-check on submarinecablemap.com at the specific coordinates from Step 1.';
+    fb.className = 'feedback show err';
+  } else if (v.includes('c-lion') || v.includes('clion') || v.includes('lion')) {
+    fb.textContent = '✗ C-Lion1 runs between Helsinki and Rostock, further east. The fault at 57°N/20–21°E (east of Gotland) does not intersect that cable. Navigate your cable map to the exact coordinates.';
+    fb.className = 'feedback show err';
+  } else if (v.includes('estlink') || v.includes('est link') || v.includes('balticconnector')) {
+    fb.textContent = '⚠ EstLink and BalticConnector are power/gas interconnectors, not telecommunications fiber cables. The outage affects voice and data traffic. Re-check submarinecablemap.com filtering for fiber optic cables only.';
     fb.className = 'feedback show err';
   } else if (v.length < 3) {
-    fb.textContent = '✗ Enter the full cable name as it appears on the submarine cable map.';
+    fb.textContent = '✗ Enter the full cable name as it appears on submarinecablemap.com.';
     fb.className = 'feedback show err';
   } else {
-    fb.textContent = '✗ Cable not confirmed — open submarinecablemap.com (or TeleGeography), navigate to ' + (localStorage.getItem('faultLat')||'57') + '°N / ' + (localStorage.getItem('faultLon')||'21') + '°E, and identify the telecommunications cable at that location.';
+    fb.textContent = '✗ Not confirmed. Navigate to submarinecablemap.com → search your Step 1 coordinates (' + (localStorage.getItem('faultLat')||'57') + '°N / ' + (localStorage.getItem('faultLon')||'21') + '°E) → look for a telecom fiber cable linking Lithuania to Sweden in that corridor.';
     fb.className = 'feedback show err';
   }
 }
