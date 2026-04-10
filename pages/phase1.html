@@ -216,11 +216,11 @@
           </div>
           <div>
             <div class="label">Cursor position (raw)</div>
-            <div class="mono small accent">2.832 μs one-way</div>
+            <div class="mono small accent">1.7157 ms one-way</div>
           </div>
           <div>
             <div class="label">Speed of light in fiber</div>
-            <div class="mono small">~204,190 km/s</div>
+            <div class="mono small">~204,000 km/s</div>
           </div>
           <div>
             <div class="label">Fiber length (total)</div>
@@ -231,19 +231,25 @@
 
       <div class="enigma-block" id="e2block">
         <div class="enigma-q">
-          Using the OTDR cursor reading of <strong class="accent">2.832 μs</strong> one-way travel time and the speed of light in fiber (<strong class="accent">204,190 km/s</strong>), calculate the fault distance from the injection point.<br>
-          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.72rem;display:block;margin-top:0.5rem">⚠ μs = <strong>microseconds</strong> = 10⁻⁶ seconds. Do NOT divide by the speed — multiply.</span>
+         Using the OTDR cursor reading of <strong class="accent">1.7157 ms</strong> one-way travel time and the speed of light in fiber (<strong class="accent">~204,000 km/s</strong>), calculate the fault distance from the injection point. <br>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.72rem;display:block;margin-top:0.5rem">
+          ⚠ ms = milliseconds = 10⁻³ seconds
+          </span>
         </div>
-        <div class="enigma-hint">// Formula: Distance (km) = Time (s) × Speed (km/s) &nbsp;·&nbsp; Round your answer to the <strong>nearest whole kilometre</strong></div>
+        <div class="enigma-hint">// distance = time × speed </div>
         <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--muted);background:rgba(0,0,0,0.25);border:1px solid rgba(74,158,255,0.1);padding:0.6rem 0.75rem;margin:0.6rem 0;line-height:2">
-          <span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.15em;display:block;margin-bottom:0.25rem">STEP-BY-STEP GUIDE</span>
-          Step 1 — Convert μs to seconds:&nbsp; 2.832 μs = 2.832 × 10⁻⁶ s = <span style="color:var(--accent)">0.000002832 s</span><br>
-          Step 2 — Apply formula:&nbsp; 0.000002832 s × 204,190 km/s = <span style="color:var(--accent)">≈ 578.x km</span><br>
-          Step 3 — Round to nearest km: &nbsp;<span style="color:var(--yellow)">enter the integer result below</span><br>
-          <span style="color:rgba(255,74,74,0.6);font-size:0.62rem">✗ Common mistake: 2.832 ÷ 204,190 = 0.0000138… → This is wrong. You must multiply, not divide.</span>
+          <span style="color:var(--muted);font-size:0.58rem;letter-spacing:0.15em;display:block;margin-bottom:0.25rem">
+          STEP-BY-STEP GUIDE
+          </span>
+          Step 1 — Convert ms to seconds:
+          1.7157 ms = <span style="color:var(--accent)">0.0017157 s</span><br>
+          Step 2 — Apply formula:
+          0.0017157 × 204,000 ≈ <span style="color:var(--accent)">350 km</span><br>
+          Step 3 — Enter the result:
+          <span style="color:var(--yellow)">nearest whole kilometre</span>
         </div>
         <div class="flex gap1 mt2 items-center">
-          <input class="mono-input" id="e2input" placeholder="integer km e.g. 578" style="max-width:200px" autocomplete="off">
+          <input class="mono-input" id="e2input" placeholder="integer km e.g. 676" style="max-width:200px" autocomplete="off">
           <span class="mono muted small">km</span>
           <button class="btn btn-primary" onclick="checkE2()">VERIFY</button>
         </div>
@@ -355,20 +361,21 @@
   }
 
   // E2 — OTDR distance (answer: 578 km — 0.000002832 × 204190 ≈ 578 km)
-  document.getElementById('e2input').addEventListener('keydown', e => { if(e.key==='Enter') checkE2(); });
+  document.getElementById('e2input').addEventListener('keydown', e => {
+  if(e.key==='Enter') checkE2(); });
   function checkE2() {
     const inp = document.getElementById('e2input');
     const fb  = document.getElementById('e2fb');
     const val = parseInt(inp.value.trim());
-    // Accept 578 ± 2
-    if (!isNaN(val) && Math.abs(val - 578) <= 2) {
-      fb.textContent = '✓ Confirmed — Fault located at ' + val + ' km from injection point. Consistent with known cable route coordinates.';
+  // Accept 350 ± 5
+    if (!isNaN(val) && Math.abs(val - 350) <= 5) {
+      fb.textContent = '✓ Confirmed — Fault located at ' + val + ' km from injection point. Matches OTDR trace.';
       fb.className = 'feedback show ok';
       inp.disabled = true;
       document.getElementById('e2block').classList.add('success');
       setTimeout(() => showStep(3), 1000);
     } else {
-      fb.textContent = '✗ Recalculate — Remember: Distance = Time(s) × Speed(km/s). Use 2.832 × 10⁻⁶ s and 204,190 km/s.';
+      fb.textContent = '✗ Recalculate — distance = time × speed. Convert ms to seconds first.';
       fb.className = 'feedback show err';
     }
   }
