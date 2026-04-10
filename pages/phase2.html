@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
   <style>
-    /* ─── ASCII map ─── */
+    
     .ascii-map {
       background: #020609; border: 1px solid rgba(74,158,255,0.1);
       padding: 1rem 1.25rem; overflow-x: auto;
@@ -16,7 +16,6 @@
     }
     .ascii-map pre { margin: 0; }
 
-    /* ─── AIS Table ─── */
     .ais-table { width: 100%; border-collapse: collapse; }
     .ais-table th {
       font-family: 'Share Tech Mono', monospace; font-size: 0.57rem;
@@ -176,11 +175,11 @@
         <div class="flex gap1 mt2" style="flex-wrap:wrap">
           <div>
             <div style="font-size:0.63rem;color:var(--muted);margin-bottom:0.25rem">LATITUDE (°N):</div>
-            <input class="mono-input" id="e1lat" placeholder="e.g. 57" style="max-width:100px" autocomplete="off">
+            <input class="mono-input" id="e1lat" placeholder="XX" style="max-width:100px" autocomplete="off">
           </div>
           <div>
             <div style="font-size:0.63rem;color:var(--muted);margin-bottom:0.25rem">LONGITUDE (°E):</div>
-            <input class="mono-input" id="e1lon" placeholder="e.g. 21" style="max-width:100px" autocomplete="off">
+            <input class="mono-input" id="e1lon" placeholder="XX" style="max-width:100px" autocomplete="off">
           </div>
           <button class="btn btn-primary" onclick="checkE1()" style="align-self:flex-end">VERIFY</button>
         </div>
@@ -258,7 +257,7 @@
         <div class="flex gap1 mt2" style="flex-wrap:wrap">
           <div style="flex:1;min-width:300px">
             <div style="font-size:0.63rem;color:var(--muted);margin-bottom:0.25rem">3 MMSI NUMBERS (comma-separated):</div>
-            <input class="mono-input" id="e2mmsi" placeholder="e.g. 273841052, 230456789, 211834560" autocomplete="off">
+            <input class="mono-input" id="e2mmsi" placeholder="e.g. XXXXXXXXX, XXXXXXXXX, XXXXXXXXX" autocomplete="off">
           </div>
           <button class="btn btn-primary" onclick="checkE2()" style="align-self:flex-end">VERIFY</button>
         </div>
