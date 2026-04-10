@@ -703,15 +703,15 @@ let mazePhase = 1;        // 1=only black passable, 2=+grey, 3=+white
 let cpReached = 0;        // 0, 1, or 2
 
 const WALL_COLORS_DRAW = {
-  2: { solid: '#2a2a2a', open: 'rgba(60,60,60,0.25)' },    // black
   1: { solid: '#777777', open: 'rgba(120,120,120,0.25)' },  // grey
+  2: { solid: '#ff4a4a', open: '#ff4a4a' },    // red
   3: { solid: '#cccccc', open: 'rgba(200,200,200,0.25)' },  // white
 };
 
 function wallPassable(wType) {
   // A wall of type wType can be passed only if its phase is unlocked
   if (wType === 0) return true;   // no wall — always open
-  if (wType === 1) return mazePhase == 1;  // black: open from phase 1
+  if (wType === 1) return mazePhase == 1;  // red: open from phase 1
   if (wType === 2) return mazePhase == 2;  // grey: open from phase 2
   if (wType === 3) return mazePhase == 3;  // white: open from phase 3
   return false;
@@ -793,7 +793,7 @@ function drawMaze() {
       const y = (r + 1) * CELL;  // wall is at the bottom edge of row r
       const passable = wallPassable(wType);
       const wc = WALL_COLORS_DRAW[wType];
-      ctx.fillStyle = passable ? wc.open : wc.solid;
+      ctx.fillStyle = wc.solid;
       ctx.fillRect(x, y, CELL - WALL, WALL);
     }
   }
@@ -807,7 +807,7 @@ function drawMaze() {
       const y = cellY(r);
       const passable = wallPassable(wType);
       const wc = WALL_COLORS_DRAW[wType];
-      ctx.fillStyle = passable ? wc.open : wc.solid;
+      ctx.fillStyle = wc.solid;
       ctx.fillRect(x, y, WALL, CELL - WALL);
     }
   }
@@ -829,7 +829,7 @@ function drawMaze() {
 }
 
 function updateMazePhaseUI() {
-  const labels = ['—', 'GREY walls open', 'BLACK walls open', 'WHITE walls open'];
+  const labels = ['—', 'GREY walls open', 'RED walls open', 'WHITE walls open'];
   document.getElementById('mazePhaseText').textContent = labels[mazePhase];
   const colors = ['','#cccccc','#999','#eeeeee'];
   document.getElementById('mazePhaseText').style.color = colors[mazePhase];
