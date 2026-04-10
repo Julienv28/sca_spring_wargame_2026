@@ -118,7 +118,7 @@
         <div class="phase-desc">
           A low-bandwidth ASCII render has been captured from the satellite downlink. The map shows a portion of a coastline with <strong>no country labels</strong>. A single red marker indicates the fault location.
           <br><br>
-          Using the shape of the coastline and the known incident context, determine the <strong>GPS coordinates</strong> of the fault marker as precisely as possible.
+          Using the map and the known incident context, determine the <strong>GPS coordinates</strong> of the fault marker as precisely as possible.
           <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.72rem;display:block;margin-top:0.6rem">⚠ NOTE DOWN your coordinates — you will need them in Step 4.</span>
         </div>
       </div>
@@ -130,33 +130,8 @@
         </div>
 
         <!-- Pure ASCII map — NO country labels, only the red incident dot -->
-        <div class="ascii-map">
-<pre id="asciiMapPre">
-  GRID REF: [CLASSIFIED]        NORTH ↑         SCALE ≈ 1:2,200,000
-  ═══════════════════════════════════════════════════════════════════════════
-       10°E      13°E      16°E      19°E      22°E      25°E      28°E
-  62°N  ·  ·  ·  ░░░░░░░  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ·  ·  ▓▓▓▓░░▓▓▓  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  61°N  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  60°N  ▓▓▓▓▓▓▓▓░░░░░░▓▓▓▓  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ▓▓▓▓▓░░░░░░░░░▓▓▓▓▓  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  59°N  ▓▓▓▓░░░░░░░░░░░░▓▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ▓▓▓▓░░░░░░░░░░░░▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓
-  58°N  ░░░░░░░░░░░░░░░░▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓
-        ░░░░░░░░░░░░░░░▓▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓
-  57°N  ░░░░░░░░░░░░░▓▓▓▓▓  ·  ·  ·  (g)  ·  · [<span class="fault-dot">●</span>] ·  ·  ·  ▓▓▓▓▓▓▓▓▓
-        ·  ·  ░░░░░░▓▓▓▓▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓
-  56°N  ·  ·  ░░░░░░░░▓▓▓▓  ·  ·  ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ·  ·  ·  ░░░░░░░░▓▓▓▓▓▓▓▓▓▓  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  55°N  ·  ·  ·  ·  ░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ·  ·  ·  ·  ·  ░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  54°N  ·  ·  ·  ·  ·  ·  ░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-        ·  ·  ·  ·  ·  ·  ·  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ═══════════════════════════════════════════════════════════════════════════
-  ▓ = land   ░ = shallow/coastal water   · = open sea   (g) = small island
-  [●] = INCIDENT LOCATION (fault marker)
-</pre>
+        <div class="ascii-map" style="text-align:center">
+          <img src="../map.png" alt="Incident map" style="max-width:100%;height:auto;border:1px solid rgba(255,255,255,0.1)">
         </div>
         <div style="margin-top:0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--muted)">
           Reading the map: latitude runs along the left edge (54°N–62°N), longitude along the top (10°E–28°E). Each character column ≈ 0.5°. The <span style="color:#ff4a4a">[●]</span> marker sits in open water, east of the small island labelled <span style="color:var(--text)">(g)</span>.
@@ -195,8 +170,7 @@
         <div class="phase-number">PHASE 02 · ENIGMA 2/4</div>
         <div class="phase-title">AIS Traffic Analysis — Proximity Reasoning</div>
         <div class="phase-desc">
-          The following raw AIS export covers <strong>58 vessels</strong> logged in the Baltic Sea during the incident window (<strong>2024-01-11 18:00Z → 2024-01-12 06:00Z</strong>).
-          You have already identified the approximate fault coordinates in Step 1.
+          There were 58 Vessels in the Baltic sea at the time of fault. It is your task to evaluate which 3 are the most suspicious.
           <br><br>
           Using <strong>only the vessel positions and your fault coordinates</strong>, determine which vessels were close enough to the fault location to be candidate suspects. There is <strong>no pre-calculated distance column</strong> — you must reason from the coordinates yourself (estimate on a map, use a tool, or calculate manually: 1° latitude ≈ 111 km, 1° longitude at 57°N ≈ 60 km).
           <br><br>
@@ -206,6 +180,17 @@
         </div>
       </div>
 
+      <div style="padding:0.75rem;margin-bottom:0.75rem;background:rgba(74,158,255,0.05);border:1px solid rgba(74,158,255,0.15);border-left:3px solid var(--accent)">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--accent);letter-spacing:0.15em;margin-bottom:0.4rem">
+          VERIFIED FAULT COORDINATES
+        </div>
+        <div style="font-size:0.85rem;color:var(--text)">
+        55°41′ N / 19°49′ E
+        </div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:0.3rem">
+        (Refined from satellite geolocation — use this precise position for all further calculations)
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-header">
           <span class="panel-tag">AIS-ARCHIVE · RAW EXPORT</span>
@@ -250,10 +235,10 @@
 
       <div class="enigma-block" id="e2block">
         <div class="enigma-q">
-          Using the vessel positions and your fault coordinates from Step 1, identify the <strong>3 vessels</strong> with an intermittent AIS signal whose last known position was within approximately <strong>15 nautical miles</strong> of the fault.<br>
+          Which 3 vessels are the most suspicious? <br>
           <span style="font-size:0.78rem;color:var(--muted);display:block;margin-top:0.4rem">Enter their MMSI numbers separated by commas. Note: some intermittent vessels are far from the fault — presence near the Baltika cable route does not automatically qualify them.</span>
         </div>
-        <div class="enigma-hint">// No distance column is provided. Estimate from coordinates. Exactly 3 INTERMITTENT vessels qualify on proximity.</div>
+        <div class="enigma-hint">// No distance column is provided. Estimate from coordinates.</div>
         <div class="flex gap1 mt2" style="flex-wrap:wrap">
           <div style="flex:1;min-width:300px">
             <div style="font-size:0.63rem;color:var(--muted);margin-bottom:0.25rem">3 MMSI NUMBERS (comma-separated):</div>
@@ -403,8 +388,8 @@ document.getElementById('stepProgress').innerHTML = renderSteps(steps, 0);
 document.getElementById('e1lat').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
 document.getElementById('e1lon').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
 function checkE1() {
-  const latRaw = document.getElementById('e1lat').value.trim().replace(/[°nN\s]/g,'');
-  const lonRaw = document.getElementById('e1lon').value.trim().replace(/[°eE\s]/g,'');
+  const latRaw = document.getElementById('e1lat').value.trim().replace(/[°nN\s'"]/g,'');
+  const lonRaw = document.getElementById('e1lon').value.trim().replace(/[°eE\s'"]/g,'');
   const lat = parseFloat(latRaw);
   const lon = parseFloat(lonRaw);
   const fb = document.getElementById('e1fb');
@@ -414,30 +399,38 @@ function checkE1() {
     fb.className = 'feedback show err';
     return;
   }
-
-  const latOk = lat >= 56 && lat <= 58;
-  const lonOk = lon >= 20 && lon <= 22;
+  const latOk = lat >= 54.5 && lat <= 56.0;
+  const lonOk = lon >= 19.0 && lon <= 20.5;
 
   if (latOk && lonOk) {
-    playerLat = lat; playerLon = lon;
-    const coordStr = `${lat}°N / ${lon}°E`;
-    fb.textContent = `✓ Confirmed — Fault location locked at ${coordStr}. Baltic Sea, east of Gotland Island. Note these coordinates for Step 4.`;
+    playerLat = lat;
+    playerLon = lon;
+
+    const trueLat = 55.6833;   // 55°41'
+    const trueLon = 19.8167;   // 19°49'
+
+    localStorage.setItem('faultLat', trueLat);
+    localStorage.setItem('faultLon', trueLon);
+
+    fb.textContent = `✓ Approximate location accepted. Proceeding to next phase for precise coordinates.`;
     fb.className = 'feedback show ok';
+
     document.getElementById('e1lat').disabled = true;
     document.getElementById('e1lon').disabled = true;
     document.getElementById('e1block').classList.add('success');
-    // Push confirmed coords to later steps
-    localStorage.setItem('faultLat', lat);
-    localStorage.setItem('faultLon', lon);
+
     setTimeout(() => { buildAISTable(); showStep(2); }, 1200);
+
   } else if (!latOk && lonOk) {
-    fb.textContent = `✗ Longitude looks reasonable, but check your latitude. The [●] marker sits on the 57°N row — read carefully.`;
+    fb.textContent = `✗ Longitude is plausible, but latitude is off. Focus on the vertical position of the marker.`;
     fb.className = 'feedback show err';
+
   } else if (latOk && !lonOk) {
-    fb.textContent = `✗ Latitude is correct (~57°N). Re-examine the longitude — the marker is east of the island (g) near 20–22°E.`;
+    fb.textContent = `✗ Latitude is plausible. Re-check the longitude — the marker is west of 20°E.`;
     fb.className = 'feedback show err';
+
   } else {
-    fb.textContent = `✗ Both values are out of range. Trace the [●] row to the left margin for latitude, and up to the top for longitude.`;
+    fb.textContent = `✗ Both values are outside the expected range. Re-evaluate the marker position on the map.`;
     fb.className = 'feedback show err';
   }
 }
@@ -528,21 +521,29 @@ while (AIS_DATA.length < 58) {
   });
 }
 
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function buildAISTable() {
   const tbody = document.getElementById('aisTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
   // Shuffle so suspects aren't always at same position
-  const shuffled = [...AIS_DATA].sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray(AIS_DATA);
   shuffled.forEach(v => {
     const tr = document.createElement('tr');
     const isBaltikaDecoy = v.mmsi === '273901234';
-    if (CORRECT_MMSI.includes(v.mmsi)) tr.className = 'near-zone';
     const sc = v.status === 'INTERMITTENT' ? 'ais-warn' : 'ais-ok';
     tr.innerHTML = `
       <td>${v.mmsi}</td>
       <td>${v.name}</td>
-      <td style="color:${['RU','TZ'].includes(v.flag)?'var(--yellow)':'var(--muted)'}">${v.flag}</td>
+      <td>${v.flag}</td>
       <td>${v.type}</td>
       <td style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.02em">${v.pos}</td>
       <td>${v.sog}</td>
