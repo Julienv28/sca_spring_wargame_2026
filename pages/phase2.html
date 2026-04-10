@@ -888,16 +888,6 @@ function checkE3() {
 
 // ══════════════════════════════════════
 // E4 — Cable name
-// CORRECT: NordBalt (Lithuania ↔ Sweden, telecom fiber)
-// This cable runs through the fault zone at ~57°N/20–21°E.
-// The nearby Baltika cable (Russian, Kaliningrad↔St.Petersburg) overlaps
-// the same general route — this ambiguity is intentional for the crisis sim.
-// Players must specifically identify NordBalt as the affected cable.
-// Common wrong answers and their feedback:
-//   - "Baltika" → explain it's the Russian cable, not the affected one
-//   - "Amber" → different cable, runs further south
-//   - "EstLink" → power cable, not telecom
-//   - "C-Lion1" → runs further east, Finland-Germany
 // ══════════════════════════════════════
 document.getElementById('e4input').addEventListener('keydown', e => { if(e.key==='Enter') checkE4(); });
 function checkE4() {
