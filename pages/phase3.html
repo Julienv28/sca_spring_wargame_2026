@@ -666,29 +666,29 @@ mazeCanvas.height = CANVAS_H;
 // Horizontal walls: hWalls[r][c] is wall between row r and row r+1 at column c
 const hWalls = [
 // col:  0   1   2   3   4   5   6   7   8   9
-  [  1,  0,  1,  0,  2,  0,  1,  0,  2,  0 ],  // between row 0 and 1
-  [  0,  2,  0,  1,  0,  3,  0,  1,  0,  1 ],  // between row 1 and 2
-  [  1,  0,  2,  0,  1,  0,  1,  0,  3,  0 ],  // between row 2 and 3
-  [  0,  1,  0,  2,  0,  1,  0,  2,  0,  1 ],  // between row 3 and 4
-  [  2,  0,  1,  0,  3,  0,  2,  0,  1,  0 ],  // between row 4 and 5
-  [  0,  3,  0,  1,  0,  2,  0,  1,  0,  2 ],  // between row 5 and 6
-  [  1,  0,  3,  0,  1,  0,  3,  0,  2,  0 ],  // between row 6 and 7
-  [  0,  2,  0,  1,  0,  3,  0,  2,  0,  1 ],  // between row 7 and 8
-  [  1,  0,  1,  0,  2,  0,  1,  0,  3,  0 ],  // between row 8 and 9
+  [  3,  3,  1,  2,  2,  2,  2,  2,  2,  2 ],  // between row 0 and 1
+  [  3,  1,  1,  3,  3,  3,  1,  3,  3,  2 ],  // between row 1 and 2
+  [  3,  2,  3,  1,  3,  1,  2,  2,  2,  3 ],  // between row 2 and 3
+  [  3,  2,  3,  2,  3,  1,  2,  3,  2,  3 ],  // between row 3 and 4
+  [  1,  2,  3,  2,  1,  3,  2,  3,  1,  1 ],  // between row 4 and 5
+  [  1,  1,  3,  2,  3,  1,  2,  2,  2,  2 ],  // between row 5 and 6
+  [  3,  1,  3,  1,  2,  1,  2,  2,  2,  2 ],  // between row 6 and 7
+  [  3,  1,  3,  1,  1,  1,  2,  2,  3,  1 ],  // between row 7 and 8
+  [  3,  1,  2,  3,  1,  1,  2,  1,  2,  3 ],  // between row 8 and 9
 ];
 // Vertical walls: vWalls[r][c] is wall between col c and col c+1 at row r
 const vWalls = [
 // col:  0   1   2   3   4   5   6   7   8
-  [  1,  0,  2,  0,  1,  0,  3,  0,  1 ],  // row 0
-  [  0,  1,  0,  3,  0,  2,  0,  1,  0 ],  // row 1
-  [  2,  0,  1,  0,  2,  0,  1,  0,  2 ],  // row 2
-  [  0,  3,  0,  1,  0,  1,  0,  2,  0 ],  // row 3
-  [  1,  0,  2,  0,  3,  0,  2,  0,  1 ],  // row 4
-  [  0,  1,  0,  2,  0,  1,  0,  3,  0 ],  // row 5
-  [  3,  0,  1,  0,  1,  0,  2,  0,  1 ],  // row 6
-  [  0,  2,  0,  3,  0,  2,  0,  1,  0 ],  // row 7
-  [  1,  0,  2,  0,  1,  0,  3,  0,  2 ],  // row 8
-  [  0,  1,  0,  2,  0,  1,  0,  2,  0 ],  // row 9
+  [  3,  3,  3,  3,  3,  3,  3,  3,  3 ],  // row 0
+  [  1,  2,  2,  2,  3,  3,  3,  3,  2 ],  // row 1
+  [  2,  2,  2,  2,  2,  2,  1,  2,  3 ],  // row 2
+  [  2,  3,  3,  1,  3,  1,  1,  2,  2 ],  // row 3
+  [  3,  3,  3,  3,  1,  1,  1,  3,  3 ],  // row 4
+  [  2,  2,  2,  2,  1,  3,  3,  3,  1 ],  // row 5
+  [  1,  1,  2,  2,  2,  1,  1,  1,  1 ],  // row 6
+  [  1,  1,  1,  1,  3,  2,  2,  2,  2 ],  // row 7
+  [  3,  3,  3,  2,  2,  2,  1,  2,  1 ],  // row 8
+  [  1,  1,  3,  1,  1,  1,  3,  2,  2 ],  // row 9
 ];
 
 // Player, checkpoints, goal
@@ -703,17 +703,17 @@ let mazePhase = 1;        // 1=only black passable, 2=+grey, 3=+white
 let cpReached = 0;        // 0, 1, or 2
 
 const WALL_COLORS_DRAW = {
-  1: { solid: '#2a2a2a', open: 'rgba(60,60,60,0.25)' },    // black
-  2: { solid: '#777777', open: 'rgba(120,120,120,0.25)' },  // grey
+  2: { solid: '#2a2a2a', open: 'rgba(60,60,60,0.25)' },    // black
+  1: { solid: '#777777', open: 'rgba(120,120,120,0.25)' },  // grey
   3: { solid: '#cccccc', open: 'rgba(200,200,200,0.25)' },  // white
 };
 
 function wallPassable(wType) {
   // A wall of type wType can be passed only if its phase is unlocked
   if (wType === 0) return true;   // no wall — always open
-  if (wType === 1) return mazePhase >= 1;  // black: open from phase 1
-  if (wType === 2) return mazePhase >= 2;  // grey: open from phase 2
-  if (wType === 3) return mazePhase >= 3;  // white: open from phase 3
+  if (wType === 1) return mazePhase == 1;  // black: open from phase 1
+  if (wType === 2) return mazePhase == 2;  // grey: open from phase 2
+  if (wType === 3) return mazePhase == 3;  // white: open from phase 3
   return false;
 }
 
@@ -829,7 +829,7 @@ function drawMaze() {
 }
 
 function updateMazePhaseUI() {
-  const labels = ['—', 'BLACK walls open', 'BLACK + GREY open', 'ALL walls open'];
+  const labels = ['—', 'GREY walls open', 'BLACK walls open', 'WHITE walls open'];
   document.getElementById('mazePhaseText').textContent = labels[mazePhase];
   const colors = ['','#cccccc','#999','#eeeeee'];
   document.getElementById('mazePhaseText').style.color = colors[mazePhase];
