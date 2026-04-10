@@ -423,11 +423,11 @@
           <div class="code-editor">
             <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="cm">#!/usr/bin/env python3</span></span></div>
             <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="cm"># OPERATION CUTLINE — Exfil cleanup v2.4</span></span></div>
-            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"><span class="cm"># Target: SRV-CABLE1, SRV-CABLE2 · Kaliningrad relay</span></span></div>
+            <div class="code-line"><span class="code-ln">03</span><span class="code-txt"><span class="cm"># Target: SRV-CABLE1, SRV-CABLE2 · Kaliningrad relay (port 4443)</span></span></div>
             <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="kw">import</span> os, subprocess, hashlib, base64</span></div>
             <div class="code-line"><span class="code-ln">05</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">06</span><span class="code-txt">RELAY_HOST = <span class="err" id="ce1" onclick="editCode(this,'ce1','relay.kal-grd-01.ru')">\"relay.kal-grd-CORRUPTED.ru\"</span>  <span class="cm"># fix: relay.kal-grd-01.ru</span></span></div>
-            <div class="code-line"><span class="code-ln">07</span><span class="code-txt">RELAY_PORT = <span class="err" id="ce2" onclick="editNum(this,'ce2',4443)">8080</span>  <span class="cm"># fix: use encrypted relay port 4443</span></span></div>
+            <div class="code-line"><span class="code-ln">07</span><span class="code-txt">RELAY_PORT = <span class="err" id="ce2" onclick="editNum(this,'ce2',4443)">8080</span> </span></div>
             <div class="code-line"><span class="code-ln">08</span><span class="code-txt">EXFIL_KEY  = <span class="str">"b64:aGlkZGVuX29wZXJhdGlvbl9rZXk="</span>  </span></div>
             <div class="code-line"><span class="code-ln">09</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">10</span><span class="code-txt"><span class="kw">def</span> <span class="fn">secure_wipe</span>(path, passes):</span></div>
@@ -435,7 +435,7 @@
             <div class="code-line"><span class="code-ln">12</span><span class="code-txt">  <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(passes):</span></div>
             <div class="code-line"><span class="code-ln">13</span><span class="code-txt">    subprocess.<span class="fn">run</span>([<span class="str">'shred'</span>, <span class="str">'-n'</span>, <span class="fn">str</span>(passes), <span class="str">'-z'</span>, path])</span></div>
             <div class="code-line"><span class="code-ln">14</span><span class="code-txt"></span></div>
-            <div class="code-line"><span class="code-ln">15</span><span class="code-txt">WIPE_PASSES = <span class="err" id="ce3" onclick="editNum(this,'ce3',7)">3</span>  <span class="cm"># fix: DoD standard = 7 passes</span></span></div>
+            <div class="code-line"><span class="code-ln">15</span><span class="code-txt">WIPE_PASSES = <span class="err" id="ce3" onclick="editNum(this,'ce3',7)">3</span>  <span class="cm"># fix: DoD standard</span></span></div>
             <div class="code-line"><span class="code-ln">16</span><span class="code-txt">WIPE_TARGETS = [<span class="str">'/srv/cable/logs'</span>, <span class="str">'/srv/cable/ais_mirror'</span>, <span class="str">'/tmp/op_cutline'</span>]</span></div>
             <div class="code-line"><span class="code-ln">17</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">18</span><span class="code-txt"><span class="kw">def</span> <span class="fn">exfil_bundle</span>(dst_host, dst_port, key):</span></div>
@@ -445,8 +445,8 @@
             <div class="code-line"><span class="code-ln">22</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">23</span><span class="code-txt"><span class="kw">def</span> <span class="fn">spoof_ais_entry</span>(mmsi, lat, lon, timestamp):</span></div>
             <div class="code-line"><span class="code-ln">24</span><span class="code-txt">  <span class="cm">"""Inject false AIS record to cover ship position"""</span></span></div>
-            <div class="code-line"><span class="code-ln">25</span><span class="code-txt">  fake_record = {<span class="str">'mmsi'</span>: mmsi, <span class="str">'lat'</span>: lat, <span class="str">'lon'</span>: lon,</span></div>
-            <div class="code-line"><span class="code-ln">26</span><span class="code-txt">    <span class="str">'sog'</span>: <span class="err" id="ce5" onclick="editNum(this,'ce5',12.4)">0.0</span>, <span class="str">'hdg'</span>: <span class="err" id="ce5b" onclick="editNum(this,'ce5b',187)">0</span>}  <span class="cm"># fix: inject plausible SOG/heading to avoid detection</span></span></div>
+            <div class="code-line"><span class="code-ln">25</span><span class="code-txt">  fake_record = {<span class="err" id="mmsi" onclick="editNum(this,'mmsi', 273841052)">mmsi</span>, <span class="str">'lat'</span>: lat, <span class="str">'lon'</span>: lon,</span></div>
+            <div class="code-line"><span class="code-ln">26</span><span class="code-txt">    <span class="str">'sog'</span>: 14, <span class="str">'hdg'</span>: 187  <span class="cm"># fix: retrieve mmsi number</span></span></div>
             <div class="code-line"><span class="code-ln">27</span><span class="code-txt">  <span class="kw">return</span> <span class="fn">ais_inject</span>(fake_record, timestamp)</span></div>
             <div class="code-line"><span class="code-ln">28</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">29</span><span class="code-txt"><span class="cm"># Main execution</span></span></div>
