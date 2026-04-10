@@ -272,11 +272,6 @@
       <div class="phase-header">
         <div class="phase-number">PHASE 02 · ENIGMA 3/4</div>
         <div class="phase-title">SIGINT Intercept — Vessel Identity Confirmation</div>
-        <div class="phase-desc">
-          A SIGINT intercept has been recovered from the incident window. It is in a foreign language — <strong>no automatic translation is provided</strong>. Use an external translation tool if needed.
-          <br><br>
-          Cross-reference the information in the intercept against the vessel database using the <strong>3 MMSI numbers from Step 2</strong>. The database is sorted alphabetically by vessel name — you will need to search.
-        </div>
       </div>
 
       <!-- The intercepted communication — Russian, no auto-translate -->
@@ -286,14 +281,7 @@
           <span class="panel-title">Intercepted Transmission — Encrypted Fragment — Partial Decode</span>
         </div>
         <div class="intercept-block">
-          <span class="int-header">⚠ ПЕРЕХВАЧЕННАЯ СВЯЗЬ — ЧАСТИЧНАЯ РАСШИФРОВКА — ИНОСТРАННЫЙ ЯЗЫК</span>
-          "Операция завершена успешно в 04:14 UTC. Позиция подтверждена: 57°18'N / 20°49'E.
-          Транспондер АИС выключен с 04:08 по 04:22. Отход курсом 087°. Глубина якорной цепи — 38 метров.
-          Судно вышло из порта Калининград 8 января. Флаг — танзанийский. Следующая точка встречи — [ЗАШИФРОВАНО].
-          Подтвердить получение. — СЕРЕБРЯНАЯ ЛУНА"
-        </div>
-        <div style="margin-top:0.6rem;font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:rgba(74,158,255,0.35)">
-          // Use an external translation tool (Google Translate, DeepL, etc.) to decode this message before proceeding.
+          <span class="int-header">Операция успешно.</span>
         </div>
       </div>
 
@@ -325,33 +313,28 @@
       <!-- Expanded record panel — shown after clicking target vessel -->
       <div class="panel" id="ownerPanel" style="display:none">
         <div class="panel-header">
-          <span class="panel-tag" style="color:var(--red)">CLASSIFIED · INT-LINK DATABASE</span>
+          <span class="panel-tag"> INT-LINK DATABASE</span>
           <span class="panel-title">Beneficial Ownership Record — SILVER MOON · IMO 9612387</span>
         </div>
         <div style="overflow-x:auto">
           <div class="db-record-row hdr">
-            <span>FIELD</span><span>VALUE</span><span>SOURCE</span><span>UPDATED</span><span>FLAG</span>
+            <span>FIELD</span><span>VALUE</span><span>SOURCE</span><span>UPDATED</span>
           </div>
-          <div class="db-record-row"><span class="accent">IMO Number</span><span>9612387</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span><span></span></div>
-          <div class="db-record-row"><span class="accent">Vessel Name</span><span>SILVER MOON</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span><span></span></div>
-          <div class="db-record-row"><span class="accent">Type</span><span>General Cargo / Crane Vessel (2,400 DWT)</span><span class="muted">IHS Markit</span><span class="muted">2023-10-14</span><span></span></div>
-          <div class="db-record-row"><span class="accent">Flag State</span><span style="color:var(--yellow)">Tanzania (TZ)</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span><span class="yellow">⚠ FOC</span></div>
-          <div class="db-record-row"><span class="accent">Registered Owner</span><span>Narvik Shipping Partners Ltd</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span><span></span></div>
-          <div class="db-record-row"><span class="accent">Beneficial Owner</span><span style="color:var(--red)">REDACTED — PENDING INT INTEL CLEARANCE</span><span class="muted">INT-LINK DB</span><span class="muted">2024-01-13</span><span class="red">⚠ CLASSIFIED</span></div>
-          <div class="db-record-row"><span class="accent">Last Port</span><span style="color:var(--yellow)">Kaliningrad, Russia (RUGRD)</span><span class="muted">AIS Archive</span><span class="muted">2024-01-08</span><span class="yellow">⚠</span></div>
-          <div class="db-record-row"><span class="accent">Destination</span><span>NONE DECLARED</span><span class="muted">AIS Live</span><span class="muted">2024-01-11</span><span></span></div>
-          <div class="db-record-row"><span class="accent">Hull Equipment</span><span style="color:var(--red)">Survey pending — heavy-duty drag equipment & cable cutting gear noted (Port State Control, Dec 2023)</span><span class="muted">PSC</span><span class="muted">2023-12-01</span><span class="red">⚠</span></div>
-          <div class="db-record-row"><span class="accent">Sanctions check</span><span style="color:var(--orange)">Watchlist match — Narvik Shipping Partners Ltd (OFAC SDN-adjacent, linked entity)</span><span class="muted">OFAC DB</span><span class="muted">2024-01-12</span><span class="orange">⚠ SDN</span></div>
-          <div class="db-record-row"><span class="accent">Previous name</span><span style="color:var(--muted)">ZVEZDNY PUT (2017–2022) · ARCTIC MOON (2022–2023)</span><span class="muted">Lloyd's archive</span><span class="muted">2023-08-14</span><span></span></div>
-          <div class="db-record-row"><span class="accent">MMSI</span><span>273841052</span><span class="muted">ITU</span><span class="muted">2023-01-01</span><span></span></div>
+          <div class="db-record-row"><span class="accent">IMO Number</span><span>9612387</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span></div>
+          <div class="db-record-row"><span class="accent">Vessel Name</span><span>SILVER MOON</span><span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span></div>
+          <div class="db-record-row"><span class="accent">Type</span><span>General Cargo / Crane Vessel (2,400 DWT)</span><span class="muted">IHS Markit</span><span class="muted">2023-10-14</span></div>
+          <div class="db-record-row"><span class="accent">Flag State</span>Tanzania (TZ)<span class="muted">IMO GISIS</span><span class="muted">2024-01-10</span></div>
+          <div class="db-record-row"><span class="accent">Registered Owner</span><span>Narvik Shipping Partners Ltd</span><span class="muted">Lloyd's Register</span><span class="muted">2024-01-10</span></div>
+          <div class="db-record-row"><span class="accent">Last Port</span>Kaliningrad, Russia (RUGRD)<span class="muted">AIS Archive</span><span class="muted">2024-01-08</span></div>
+          <div class="db-record-row"><span class="accent">Destination</span><span>NONE DECLARED</span><span class="muted">AIS Live</span><span class="muted">2024-01-11</span></div>
+          <div class="db-record-row"><span class="accent">Sanctions check</span>Watchlist match — Narvik Shipping Partners Ltd (OFAC SDN-adjacent, linked entity)<span class="muted">OFAC DB</span><span class="muted">2024-01-12</span></div>
+          <div class="db-record-row"><span class="accent">Previous name</span>ZVEZDNY PUT (2017–2022) · ARCTIC MOON (2022–2023)<span class="muted">Lloyd's archive</span><span class="muted">2023-08-14</span></div>
+          <div class="db-record-row"><span class="accent">MMSI</span><span>273841052</span><span class="muted">ITU</span><span class="muted">2023-01-01</span></div>
         </div>
       </div>
 
       <div class="enigma-block" id="e3block">
-        <div class="enigma-q">
-          Of your 3 candidate vessels, one is flagged under Tanzania AND has Kaliningrad as its last port of departure. Find it in the database (search by MMSI). What is its <strong>vessel name</strong>?
-        </div>
-        <div class="enigma-hint">// Search the database using each MMSI number from Step 2. Click the matching entry to reveal full details.</div>
+        <div class="enigma-hint">Which vessel do you suspect to be responsible for the fault?</div>
         <div class="flex gap1 mt2">
           <input class="mono-input" id="e3input" placeholder="Vessel name" style="max-width:240px" autocomplete="off">
           <button class="btn btn-primary" onclick="checkE3()">VERIFY</button>
@@ -368,56 +351,18 @@
         <div class="phase-number">PHASE 02 · ENIGMA 4/4</div>
         <div class="phase-title">Affected Cable — Infrastructure Identification</div>
         <div class="phase-desc">
-          You now know the fault coordinates from Step 1. No cable map is provided here — you must use <strong>publicly available submarine cable resources</strong> to overlay the fault location and identify which cable was severed.
-          <br><br>
-          The fault is at approximately <span class="coord-pill" id="confirmedCoords">57°N / 21°E</span> (use your precise Step 1 coordinates).
-          <br><br>
+          You now know the vessel who damaged the cable and its location. No cable map is provided here — you must use <strong>publicly available submarine cable resources</strong> to overlay the fault location and identify which cable was severed.
+          <br>
           <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ Be precise: multiple cables cross this region of the Baltic. One is a Russian-operated cable with a notified maintenance window. You need to identify specifically the <em>affected</em> cable — the one declared faulty by the reporting country.</span>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-tag">CABLE-ID</span>
-          <span class="panel-title">Cable Infrastructure — External Reference Required</span>
-        </div>
-        <div style="padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
-          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);margin-bottom:0.4rem">FAULT COORDINATES</div>
-            <div style="font-size:0.82rem;color:var(--accent)" id="faultCoordsDisplay">Approx. 57°N / 21°E (use your Step 1 answer)</div>
-          </div>
-          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);margin-bottom:0.4rem">SUGGESTED RESOURCES</div>
-            <div style="font-size:0.78rem">submarinecablemap.com &nbsp;·&nbsp; TeleGeography &nbsp;·&nbsp; ICPC cable database</div>
-          </div>
-          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);margin-bottom:0.4rem">SUSPECT VESSEL POSITION</div>
-            <div style="font-size:0.78rem">SILVER MOON last fix: 57°18'N / 20°49'E</div>
-          </div>
-          <div style="border:1px solid rgba(74,158,255,0.1);padding:0.75rem">
-            <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--muted);margin-bottom:0.4rem">METHOD</div>
-            <div style="font-size:0.78rem">Open the cable map → search the coordinates → note which cable(s) pass through the fault zone</div>
-          </div>
-        </div>
-
-        <!-- Contextual intelligence fragments — steer toward NordBalt without naming it -->
-        <div style="margin-top:1rem;padding:0.75rem;border:1px solid rgba(245,197,66,0.15);background:rgba(245,197,66,0.03)">
-          <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--yellow);margin-bottom:0.5rem;letter-spacing:0.1em">INTELLIGENCE FRAGMENTS</div>
-          <ul style="font-size:0.78rem;color:var(--muted);list-style:none;padding:0;line-height:2">
-            <li>▸ The outage was <strong style="color:var(--text)">declared by the Lithuanian telecommunications authority</strong> at 04:22 UTC — citing total loss of their primary westbound fiber link</li>
-            <li>▸ The cable connects a <strong style="color:var(--text)">Baltic state to Sweden</strong> — approximately 450 km in length, laid 2009–2010</li>
-            <li>▸ The cable is a <strong style="color:var(--text)">telecommunications fiber optic cable</strong>, not a power or gas interconnector</li>
-            <li>▸ A <span style="color:var(--yellow)">second cable of Russian ownership</span> runs through the same corridor and connects Kaliningrad to St. Petersburg — its operator has a maintenance window on record for this period. This <strong style="color:var(--text)">complicates attribution</strong>.</li>
-            <li>▸ <span style="color:var(--muted);font-size:0.72rem">Cross-reference: open submarinecablemap.com → navigate to your Step 1 coordinates → identify the telecom cable linking Lithuania to Sweden through this zone</span></li>
-          </ul>
-        </div>
-      </div>
 
       <div class="enigma-block" id="e4block">
         <div class="enigma-q">
-          Using an external submarine cable map and the fault coordinates from Step 1, identify the name of the cable that was severed.
+          Using an external submarine cable map and the previous elements gathered, identify the name of the cable that was severed.
         </div>
-        <div class="enigma-hint">// Open submarinecablemap.com, navigate to 57°N / 21°E (Baltic Sea, east of Gotland), and identify the telecommunications cable passing through that location.</div>
+        <div class="enigma-hint">// Open submarinecablemap.com, navigate around the concerned zone (Baltic Sea, east of Gotland), and identify the telecommunications cable passing through that location.</div>
         <div class="flex gap1 mt2">
           <input class="mono-input" id="e4input" placeholder="Cable name" style="max-width:320px" autocomplete="off">
           <button class="btn btn-primary" onclick="checkE4()">VERIFY</button>
