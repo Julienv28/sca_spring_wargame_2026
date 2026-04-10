@@ -445,8 +445,8 @@
             <div class="code-line"><span class="code-ln">22</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">23</span><span class="code-txt"><span class="kw">def</span> <span class="fn">spoof_ais_entry</span>(mmsi, lat, lon, timestamp):</span></div>
             <div class="code-line"><span class="code-ln">24</span><span class="code-txt">  <span class="cm">"""Inject false AIS record to cover ship position"""</span></span></div>
-            <div class="code-line"><span class="code-ln">25</span><span class="code-txt">  fake_record = {<span class="err" id="mmsi" onclick="editNum(this,'mmsi', 273841052)">mmsi</span>, <span class="str">'lat'</span>: lat, <span class="str">'lon'</span>: lon,</span></div>
-            <div class="code-line"><span class="code-ln">26</span><span class="code-txt">    <span class="str">'sog'</span>: 14, <span class="str">'hdg'</span>: 187  <span class="cm"># fix: retrieve mmsi number</span></span></div>
+            <div class="code-line"><span class="code-ln">25</span><span class="code-txt">  fake_record = {<span class="str">'mmsi'</span>:<span class="err" id="mmsi" onclick="editNum(this,'mmsi', 273841052)">mmsi</span>, <span class="str">'lat'</span>: lat, <span class="str">'lon'</span>: lon,</span></div>
+            <div class="code-line"><span class="code-ln">26</span><span class="code-txt">    <span class="str">'sog'</span>: 14, <span class="str">'hdg'</span>: 187 } <span class="cm"># fix: retrieve mmsi number</span></span></div>
             <div class="code-line"><span class="code-ln">27</span><span class="code-txt">  <span class="kw">return</span> <span class="fn">ais_inject</span>(fake_record, timestamp)</span></div>
             <div class="code-line"><span class="code-ln">28</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">29</span><span class="code-txt"><span class="cm"># Main execution</span></span></div>
