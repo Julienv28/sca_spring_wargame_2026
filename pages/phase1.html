@@ -78,49 +78,49 @@
             <span style="color:var(--muted);font-size:0.6rem;letter-spacing:0.1em;font-family:'Share Tech Mono',monospace">RTT</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">10.0.1.0/24</span>
+            <span class="route-dest">10.0.1.15</span>
             <span class="route-gw">10.0.0.1</span>
             <span class="route-iface">eth0</span>
             <span class="route-status status-up">UP</span>
             <span class="mono small muted">2ms</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">10.0.2.0/24</span>
+            <span class="route-dest">10.0.2.16</span>
             <span class="route-gw">10.0.0.2</span>
             <span class="route-iface">eth0</span>
             <span class="route-status status-up">UP</span>
             <span class="mono small muted">3ms</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">172.16.8.0/22</span>
+            <span class="route-dest">172.16.8.14</span>
             <span class="route-gw">172.16.0.1</span>
             <span class="route-iface">eth1</span>
             <span class="route-status status-deg">DEGRADED</span>
             <span class="mono small yellow">47ms</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">172.16.12.0/22</span>
+            <span class="route-dest">172.16.12.3</span>
             <span class="route-gw">172.16.0.1</span>
             <span class="route-iface">eth1</span>
             <span class="route-status status-up">UP</span>
             <span class="mono small muted">5ms</span>
           </div>
           <div class="route-row" style="background:rgba(255,74,74,0.05)">
-            <span class="route-dest" style="color:var(--red)">192.168.48.0/21</span>
+            <span class="route-dest" style="color:var(--red)">154.203.207.6</span>
             <span class="route-gw" style="color:var(--red)">192.168.0.1</span>
             <span class="route-iface" style="color:var(--red)">eth2</span>
             <span class="route-status status-down">DOWN</span>
             <span class="mono small red">∞</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">192.168.64.0/21</span>
+            <span class="route-dest">192.168.64.17</span>
             <span class="route-gw">192.168.0.2</span>
             <span class="route-iface">eth2</span>
             <span class="route-status status-up">UP</span>
             <span class="mono small muted">4ms</span>
           </div>
           <div class="route-row">
-            <span class="route-dest">203.0.113.0/24</span>
+            <span class="route-dest">203.0.113.8</span>
             <span class="route-gw">203.0.113.1</span>
             <span class="route-iface">eth3</span>
             <span class="route-status status-up">UP</span>
@@ -130,10 +130,11 @@
       </div>
 
       <div class="enigma-block" id="e1block">
-        <div class="enigma-q">Which network segment (CIDR notation) is completely down? Enter the destination network address.</div>
-        <div class="enigma-hint">// Look for status DOWN with infinite RTT</div>
+        <div class="enigma-q">Which network endpoint is completely down? The destination IP address AND the corresponding country.</div>
+        <div class="enigma-hint">// Use OSINT tools (IP lookup) to identify the affected region</div>
         <div class="flex gap1 mt2">
-          <input class="mono-input" id="e1input" placeholder="e.g. 10.0.0.0/24" style="max-width:260px" autocomplete="off" spellcheck="false">
+          <input class="mono-input" id="e1input" placeholder="e.g. 10.0.0.0" style="max-width:220px" autocomplete="off" spellcheck="false">
+          <input class="mono-input" id="e1country" placeholder="Country (e.g. Romania)" style="max-width:180px">
           <button class="btn btn-primary" onclick="checkE1()">VERIFY</button>
         </div>
         <div class="feedback" id="e1fb"></div>
@@ -331,22 +332,26 @@
     window.scrollTo(0,0);
   }
 
-  // E1 — Network route (answer: 192.168.48.0/21)
+  // E1 — Network route
   document.getElementById('e1input').addEventListener('keydown', e => { if(e.key==='Enter') checkE1(); });
   function checkE1() {
-    const inp = document.getElementById('e1input');
-    const fb  = document.getElementById('e1fb');
-    const val = inp.value.trim();
-    if (val === '192.168.48.0/21') {
-      fb.textContent = '✓ Correct — Segment 192.168.48.0/21 via interface eth2 is DOWN. Proceeding to physical layer analysis.';
-      fb.className = 'feedback show ok';
-      inp.disabled = true;
-      document.getElementById('e1block').classList.add('success');
-      setTimeout(() => showStep(2), 1000);
-    } else {
-      fb.textContent = '✗ Incorrect — check the routing table for the entry with status DOWN and RTT ∞';
-      fb.className = 'feedback show err';
-    }
+  const ip = document.getElementById('e1ip').value.trim();
+  const country = document.getElementById('e1country').value.trim().toLowerCase();
+  const fb  = document.getElementById('e1fb');
+
+  if (ip === '154.203.207.6' && country === 'lithuania') {
+    fb.textContent = '✓ Correct — 154.203.207.6 (Lithuania) is DOWN. Backbone disruption confirmed.';
+    fb.className = 'feedback show ok';
+
+    document.getElementById('e1ip').disabled = true;
+    document.getElementById('e1country').disabled = true;
+    document.getElementById('e1block').classList.add('success');
+
+    setTimeout(() => showStep(2), 1000);
+  } else {
+    fb.textContent = '✗ Incorrect — Check the DOWN route and perform an IP lookup.';
+    fb.className = 'feedback show err';
+  }
   }
 
   // E2 — OTDR distance (answer: 578 km — 0.000002832 × 204190 ≈ 578 km)
