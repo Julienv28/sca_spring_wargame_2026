@@ -543,11 +543,11 @@ function buildAISTable() {
       <td>${v.name}</td>
       <td>${v.flag}</td>
       <td>${v.type}</td>
-      <td style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.02em">${v.pos}</td>
+      <td>${v.pos}</td>
       <td>${v.sog}</td>
       <td>${v.hdg}°</td>
       <td class="${sc}">${v.status}</td>
-      <td class="ais-note" style="color:${isBaltikaDecoy?'rgba(245,197,66,0.6)':'var(--muted)'}">${v.note}</td>
+      <td>${v.note}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -780,14 +780,14 @@ function filterVDB(q) {
     }
     const sc = v.status === 'INTERMITTENT' ? 'color:var(--yellow)' : 'color:var(--green)';
     tr.innerHTML = `
-      <td style="color:${v.isTarget?'var(--red)':'var(--text)'};font-weight:${v.isTarget?'bold':'normal'}">${v.name}</td>
-      <td style="color:var(--accent)">${v.mmsi}</td>
-      <td style="color:var(--muted)">${v.imo}</td>
-      <td style="color:${v.flag.includes('Tanzania')?'var(--yellow)':v.flag.includes('Russia')?'var(--yellow)':'var(--muted)'}">${v.flag}</td>
+      <td>${v.name}</td>
+      <td>${v.mmsi}</td>
+      <td>${v.imo}</td>
+      <td>${v.flag}</td>
       <td>${v.type}</td>
-      <td style="color:var(--muted);font-size:0.6rem">${v.owner}</td>
-      <td style="color:${v.lastPort.includes('Kaliningrad')?'var(--yellow)':'var(--muted)'};font-size:0.62rem">${v.lastPort}</td>
-      <td style="${sc};font-size:0.6rem">${v.status}</td>
+      <td>${v.owner}</td>
+      <td>${v.lastPort}</td>
+      <td>${v.status}</td>
     `;
     tbody.appendChild(tr);
   });
