@@ -256,6 +256,7 @@
                     <li>⚠ If the next-hop IP is the firewall itself, it may create a routing loop → use the upstream gateway instead.</li>
                     <li>⚠ "MISSING" or invalid next-hops must be replaced with a valid IP inside the destination subnet.</li>
                     <li>⚠ Stale routes often point to the wrong network → verify the correct interface gateway.</li>
+                    <li>Here is a set of IP adresses that may be useful for you: 10.0.2.254 ; 10.0.0.1 ; 10.2.1.1 ; 10.3.1.1 ; 10.0.3.254 ; 10.0.0.254 </li>
                  </ul>
               <div style="margin-top:0.4rem">
                  <strong>Firewall hint:</strong> One rule blocks too little traffic (UDP only), another allows the wrong network (192.168.x.x). Fix both to restore internal communication.
@@ -315,7 +316,7 @@
             <div class="code-line"><span class="code-ln">01</span><span class="code-txt"><span class="cm">! FW-WEST-01 :: ACL inbound DMZ</span></span></div>
             <div class="code-line"><span class="code-ln">02</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="kw">permit</span> tcp 10.2.0.0 0.0.0.255 10.2.1.0 0.0.0.255 <span class="kw">eq</span> 443</span></div>
             <div class="code-line"><span class="code-ln">03</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="kw">permit</span> tcp 10.2.0.0 0.0.0.255 10.2.1.0 0.0.0.255 <span class="kw">eq</span> 22</span></div>
-            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">deny</span> <span class="err" id="acl1" onclick="fixACL('acl1','any','udp')">udp</span> any 10.2.0.0 0.0.0.255  <span class="cm">! should be: deny ip any ...</span></span></div>
+            <div class="code-line"><span class="code-ln">04</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">deny</span> <span class="err" id="acl1" onclick="fixACL('acl1','any','udp')">udp</span> any 10.2.0.0 0.0.0.255  <span class="cm">! should be: deny any any ...</span></span></div>
             <div class="code-line"><span class="code-ln">05</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">permit</span> ip <span class="err" id="acl2" onclick="fixACL('acl2','10.0.0.0 0.255.255.255','subnet')">192.168.0.0 0.0.255.255</span> any  <span class="cm">! should be 10.x.x.x internal</span></span></div>
             <div class="code-line"><span class="code-ln">06</span><span class="code-txt"><span class="kw">access-list</span> 110 <span class="fn">deny</span> ip any any <span class="cm">! implicit deny</span></span></div>
           </div>

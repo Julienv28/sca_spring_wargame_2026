@@ -336,7 +336,7 @@
         <div class="phase-desc">
           You now know the vessel who damaged the cable and its location. No cable map is provided here — you must use <strong>publicly available submarine cable resources</strong> to overlay the fault location and identify which cable was severed.
           <br>
-          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ Be precise: multiple cables cross this region of the Baltic. One is a Russian-operated cable with a notified maintenance window. You need to identify specifically the <em>affected</em> cable — the one declared faulty by the reporting country.</span>
+          <span style="color:var(--yellow);font-family:'Share Tech Mono',monospace;font-size:0.71rem">⚠ Be precise: multiple cables cross this region of the Baltic.</span>
         </div>
       </div>
 
@@ -345,7 +345,6 @@
         <div class="enigma-q">
           Using an external submarine cable map and the previous elements gathered, identify the name of the cable that was severed.
         </div>
-        <div class="enigma-hint">// Open submarinecablemap.com, navigate around the concerned zone (Baltic Sea, east of Gotland), and identify the telecommunications cable passing through that location.</div>
         <div class="flex gap1 mt2">
           <input class="mono-input" id="e4input" placeholder="Cable name" style="max-width:320px" autocomplete="off">
           <button class="btn btn-primary" onclick="checkE4()">VERIFY</button>
@@ -806,7 +805,7 @@ function checkE3() {
   const v = document.getElementById('e3input').value.trim().toUpperCase().replace(/\s+/g,' ');
   const fb = document.getElementById('e3fb');
   if (v.includes('SILVER MOON') || v === 'SILVER MOON') {
-    fb.textContent = '✓ Confirmed — SILVER MOON (MMSI 273841052) is the suspect: Tanzanian flag, last port Kaliningrad (Russia), SDN-adjacent owner, cable-cutting equipment noted. Proceeding to cable identification.';
+    fb.textContent = '✓ Confirmed — SILVER MOON (MMSI 273841052) is the suspect: Tanzanian flag, last port Kaliningrad (Russia), SDN-adjacent owner, cable-cutting equipment noted. Trace of recent acquisition coming from Russia. Proceeding to cable identification.';
     fb.className = 'feedback show ok';
     document.getElementById('e3input').disabled = true;
     document.getElementById('e3block').classList.add('success');
